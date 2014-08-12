@@ -1,7 +1,10 @@
 var express	= require('express'),
     config	= require(__dirname + '/config/config'),
     logger	= require(__dirname + '/lib/logger'),
+    http	= require('http'),
     app		= express();
+
+http.globalAgent.maxSockets = Infinity;
 
 logger.log('info', 'Initializing HckrStats back end on', process.env['NODE_ENV'], 'mode');
 
