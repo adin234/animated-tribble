@@ -4,7 +4,7 @@ var express	= require('express'),
     http	= require('http'),
     app		= express();
 
-http.globalAgent.maxSockets = Infinity;
+http.globalAgent.maxSockets = 30;
 
 logger.log('info', 'Initializing HckrStats back end on', process.env['NODE_ENV'], 'mode');
 
@@ -26,3 +26,7 @@ app.listen(config.port);
 logger.log('info', 'Server listening on port', config.port);
 
 module.exports = app;
+
+setInterval(function() {
+	process.cache = {};
+}, 60000);

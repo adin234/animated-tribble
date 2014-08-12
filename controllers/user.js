@@ -8,8 +8,9 @@ exports.get_user = function (req, res, next) {
 	var data = {},
 		user,
 		start = function () {
-			if(process.cache && process.cache[req.params.id]) {
-				return send_response(null, process.cache[req.params.id]);
+				return res.send('nothing to do here');
+			if(global.cache && global.cache[req.params.id]) {
+				return send_response(null, global.cache[req.params.id]);
 			}
 
 			logger.log('info', 'Getting User');
@@ -61,12 +62,12 @@ exports.get_user = function (req, res, next) {
 				return res.status(500).send({message: 'user not found'});
 			}
 
-			if(!process.cache) {
-				process.cache = {};
+			if(!global.cache) {
+				global.cache = {};
 			}
 
-			if(!process.cache[req.params.id]) {
-				process.cache[req.params.id] = result;
+			if(!global.cache[req.params.id]) {
+				global.cache[req.params.id] = result;
 			}
 
 			res.send(result[0]);
