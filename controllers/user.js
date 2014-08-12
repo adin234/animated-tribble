@@ -1,17 +1,15 @@
 var config 			= require(__dirname + '/../config/config'),
     util			= require(__dirname + '/../helpers/util'),
     mysql			= require(__dirname + '/../lib/mysql'),
-    logger         	= require(__dirname + '/../lib/logger'),
-    cache			= {};
-
+    logger         	= require(__dirname + '/../lib/logger');
 
 exports.get_user = function (req, res, next) {
 	res.setHeader('Access-Control-Allow-Origin', '*');
 	var data = {},
 		user,
 		start = function () {
-			if(cache[req.params.id]) {
-				return send_response(null, cache[req.params.id]);
+			if(process.cache[req.params.id]) {
+				return send_response(null, process.cache[req.params.id]);
 			}
 
 			logger.log('info', 'Getting User');
@@ -63,8 +61,12 @@ exports.get_user = function (req, res, next) {
 				return res.status(500).send({message: 'user not found'});
 			}
 
-			if(!cache[req.params.id]) {
-				cache[req.params.id] = result[0];
+			if(!process.cache) {
+				process.cache = {};
+			}
+			
+			if(!process.cache[req.params.id]) {
+				process.cache[req.params.id] = result[0];
 			}
 
 			res.send(result[0]);
