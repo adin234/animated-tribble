@@ -8,7 +8,7 @@ exports.get_user = function (req, res, next) {
 	var data = {},
 		user,
 		start = function () {
-			if(process.cache[req.params.id]) {
+			if(process.cache && process.cache[req.params.id]) {
 				return send_response(null, process.cache[req.params.id]);
 			}
 
@@ -48,7 +48,7 @@ exports.get_user = function (req, res, next) {
 			});
 
 			user.custom_fields = custom_field_data;
-			send_response(null, user);
+			send_response(null, [user]);
 		},
 
 		send_response = function (err, result) {
@@ -64,9 +64,9 @@ exports.get_user = function (req, res, next) {
 			if(!process.cache) {
 				process.cache = {};
 			}
-			
+
 			if(!process.cache[req.params.id]) {
-				process.cache[req.params.id] = result[0];
+				process.cache[req.params.id] = result;
 			}
 
 			res.send(result[0]);
