@@ -1,0 +1,9 @@
+{
+	"name": "gamers",
+	"description": "gamers.tm rewrite",
+	"version": "0.0.1",
+	"private": true,
+    "dependencies": {
+        "express": "4.8.x"
+    }
+}
