@@ -1,7 +1,8 @@
 var config 			= require(__dirname + '/../config/config'),
     util			= require(__dirname + '/../helpers/util'),
     mysql			= require(__dirname + '/../lib/mysql'),
-    logger         	= require(__dirname + '/../lib/logger');
+    logger         	= require(__dirname + '/../lib/logger'),
+    cache			= {};
 
 
 exports.get_user = function (req, res, next) {
@@ -9,6 +10,10 @@ exports.get_user = function (req, res, next) {
 	var data = {},
 		user,
 		start = function () {
+			if(cache[req.params.id]) {
+				return send_response(null, cache[req.params.id]);
+			}
+
 			logger.log('info', 'Getting User');
 			mysql.open(config.mysql)
 				.query(
@@ -45,7 +50,7 @@ exports.get_user = function (req, res, next) {
 			});
 
 			user.custom_fields = custom_field_data;
-			res.send(user);
+			send_response(null, user);
 		},
 
 		send_response = function (err, result) {
@@ -56,6 +61,10 @@ exports.get_user = function (req, res, next) {
 
 			if(result.length === 0) {
 				return res.status(500).send({message: 'user not found'});
+			}
+
+			if(!cache[req.params.id]) {
+				cache[req.params.id] = result[0];
 			}
 
 			res.send(result[0]);
