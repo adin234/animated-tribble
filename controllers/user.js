@@ -8,7 +8,6 @@ exports.get_user = function (req, res, next) {
 	var data = {},
 		user,
 		start = function () {
-				return res.send('nothing to do here');
 			if(global.cache && global.cache[req.params.id]) {
 				return send_response(null, global.cache[req.params.id]);
 			}
@@ -45,7 +44,10 @@ exports.get_user = function (req, res, next) {
 		fix_response_data = function (err, result) {
 			var custom_field_data = {};
 			result.forEach(function(item, i) {
-				custom_field_data[new Buffer( item.field_id, 'binary' ).toString()] = item.field_value;
+				var index = new Buffer( item.field_id, 'binary' ).toString();
+				if(index != 'refresh_token' && index != 'access_token') {
+					custom_field_data[index] = item.field_value;
+				}
 			});
 
 			user.custom_fields = custom_field_data;
