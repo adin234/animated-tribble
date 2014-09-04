@@ -26,7 +26,3 @@ app.listen(config.port);
 logger.log('info', 'Server listening on port', config.port);
 
 module.exports = app;
-
-setInterval(function() {
-	global.cache = {};
-}, 60000);
