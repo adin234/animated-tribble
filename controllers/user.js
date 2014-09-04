@@ -4,12 +4,11 @@ var config 			= require(__dirname + '/../config/config'),
     logger         	= require(__dirname + '/../lib/logger');
 
 exports.get_user = function (req, res, next) {
-	res.setHeader('Access-Control-Allow-Origin', '*');
 	var data = {},
 		user,
 		start = function () {
-			if(global.cache && global.cache[req.params.id]) {
-				return send_response(null, global.cache[req.params.id]);
+			if(global.cache && global.cache.user && global.cache.user[req.params.id]) {
+				return send_response(null, global.cache.user[req.params.id]);
 			}
 
 			logger.log('info', 'Getting User');
@@ -68,8 +67,12 @@ exports.get_user = function (req, res, next) {
 				global.cache = {};
 			}
 
-			if(!global.cache[req.params.id]) {
-				global.cache[req.params.id] = result;
+			if(!global.cache.user) {
+				global.cache.user = {};
+			}
+
+			if(!global.cache.user[req.params.id]) {
+				global.cache.user[req.params.id] = result;
 			}
 
 			res.send(result[0]);

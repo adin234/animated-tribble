@@ -6,7 +6,6 @@ var config 			= require(__dirname + '/../config/config'),
 
 
 exports.get_streamers = function (req, res, next) {
-	res.setHeader('Access-Control-Allow-Origin', '*');
 	var data = {},
 		user,
 		start = function () {
@@ -56,7 +55,7 @@ exports.get_streamers = function (req, res, next) {
 				logger.log('warn', 'Error getting the streamers from twitch');
 				return next(err);
 			}
-
+			
 			online_streamers = result.streams
 				.map(function(item) {
 					return item.channel.name;
