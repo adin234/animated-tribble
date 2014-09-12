@@ -3,6 +3,7 @@ var loc			= __dirname + '/../controllers/',
 	user 		= require(loc + 'user'),
 	games 		= require(loc + 'games'),
 	news 		= require(loc + 'news'),
+	shows 		= require(loc + 'shows'),
 	streamers	= require(loc + 'streamers');
 
 module.exports	= function (router, logger) {
@@ -26,6 +27,7 @@ module.exports	= function (router, logger) {
 	router.get('/games/:gameid/videos', games.get_game_videos);
 	router.get('/games/:gameid/playlists', games.get_game_playlists);
 	router.get('/news', news.get_news);
+	router.get('/shows', shows.get_shows);
 	router.all('*', function (req, res) {
 		res.status(404)
 			.send({message : 'Nothing to do here.'});
