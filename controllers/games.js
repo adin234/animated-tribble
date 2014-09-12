@@ -61,9 +61,9 @@ exports.get_games = function (req, res, next) {
 			var values = result[0].option_value;
 			var finalvalue = [];
 			for(var i=0; i<values.game_id.length; i++) {
-				if(values.game_id[i].length && 
-					(req.query.featured 
-						? ~data.indexOf(values.game_id[i]) 
+				if(values.game_id[i].length &&
+					(req.query.featured
+						? ~data.indexOf(values.game_id[i])
 						: 1)
 				) {
 					finalvalue.push({

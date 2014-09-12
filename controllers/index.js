@@ -22,7 +22,7 @@ exports.get_index = function (req, res, next) {
 			result = result[0];
 			data.forum = us.unserialize(new Buffer(result.option_value, 'binary')
 					.toString()).join(',');
-			
+
 			mysql.open(config.mysql)
 				.query(
 					"SELECT option_id, option_value from EWRporta_options \
@@ -97,7 +97,7 @@ exports.get_index = function (req, res, next) {
 			data.games_ids = [];
 			data.featured_games = [];
 			data.featured_games_ids = [];
-			
+
 			for(var i=0; i < result.length; i++) {
 				result[i].platforms = result[i].platforms && result[i].platforms
 					.split(',').map(function(e) {
@@ -143,7 +143,7 @@ exports.get_index = function (req, res, next) {
 
 					delete data.games_ids;
 					delete data.featured_games_ids;
-					
+
 					get_featured_videos();
 				}
 			}, next);
