@@ -64,7 +64,7 @@ exports.get_shows = function (req, res, next) {
 
 			data.videos = result;
 
-			return mongo.collection('showsPlaylist')
+			return mongo.collection('showsPlaylists')
 				.find()
 				.toArray(get_categories);
 
@@ -92,18 +92,18 @@ exports.get_shows = function (req, res, next) {
 
 			var options = [];
 
-			// result.option_id = us.unserialize(new Buffer(result.option_id, 'binary'));
-			// result.option_value = us.unserialize(new Buffer(result.option_value, 'binary'));
+			result.option_id = new Buffer(result.option_id, 'binary').toString();
+			result.option_value = us.unserialize(new Buffer(result.option_value, 'binary').toString());
 
-			// for(var i=0; i<result.option_value.category_id.length; i++) {
-			// 	if(result.option_value.category_id[i].length) {
-			// 		options.push({
-			// 			id: result.option_value.category_id[i],
-			// 			name: result.option_value.category_name[i],
-			// 			tags: result.option_value.tags[i]
-			// 		})
-			// 	}
-			// }
+			for(var i=0; i<result.option_value.category_id.length; i++) {
+				if(result.option_value.category_id[i].length) {
+					options.push({
+						id: result.option_value.category_id[i],
+						name: result.option_value.category_name[i],
+						tags: result.option_value.tags[i]
+					})
+				}
+			}
 
 			data.categories = options;
 
