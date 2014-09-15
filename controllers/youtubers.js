@@ -8,17 +8,23 @@ exports.get_youtubers = function (req, res, next) {
     var data = {},
         users,
         userChannelIndex = {},
+        limit,
+        page,
         start = function () {
             if(global.cache && global.cache.user && global.cache.user[req.params.id]) {
                 return send_response(null, global.cache.user[req.params.id]);
             }
 
             logger.log('info', 'Getting Youtubers');
+            limit   = req.query.limit || 25;
+            page    = req.query.page || 1;
+
             mysql.open(config.mysql)
                 .query(
                     "SELECT * FROM xf_user WHERE user_id IN ("
-                    +"    SELECT user_id FROM xf_user_field_value WHERE field_id = 'youtube_id' AND field_value IS NOT NULL and field_value <> '')"
-                    +" LIMIT 60",
+                    +" SELECT user_id FROM xf_user_field_value WHERE field_id = 'youtube_id' AND field_value IS NOT NULL and field_value <> '')"
+                    +" LIMIT "+limit
+                    +" OFFSET "+(page - 1)*limit,
                     [req.params.id],
                     get_youtube_id
                 ).end();
@@ -42,7 +48,7 @@ exports.get_youtubers = function (req, res, next) {
 
             mysql.open(config.mysql)
                 .query(
-                    'SELECT user_id, field_value as youtube_id FROM cxf_user_field_value WHERE field_id = \'youtube_id\' AND user_id IN ('+ids.join(',')+')',
+                    'SELECT user_id, field_value as youtube_id FROM xf_user_field_value WHERE field_id = \'youtube_id\' AND user_id IN ('+ids.join(',')+')',
                     [],
                     get_youtubers_video
                 ).end();
