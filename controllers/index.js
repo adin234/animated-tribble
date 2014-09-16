@@ -22,7 +22,7 @@ exports.get_index = function (req, res, next) {
 			result = result[0];
 			data.forum = us.unserialize(new Buffer(result.option_value, 'binary')
 					.toString()).join(',');
-			
+
 			mysql.open(config.mysql)
 				.query(
 					"SELECT option_id, option_value from EWRporta_options \
@@ -59,34 +59,35 @@ exports.get_index = function (req, res, next) {
 					ORDER BY promote_date DESC \
 					LIMIT "+$options['recentfeatures_limit'],
 					[$options['recentfeatures_filename'], date, date],
-					function (err, result) {
-						if(err) {
-							next.err;
-						}
-
-						data.slider = result;
-						delete data.forum;
-
-						if(req.query.console) {
-							return mysql.open(config.mysql)
-								.query(
-									'select a.*, c.active, \
-									c.featured_date, c.priority, \
-									c.active, b.tags \
-									from anytv_games_consoles a \
-									inner join anytv_game_tags b on \
-									a.id = b.game_id \
-									left join anytv_game_featured c on \
-									a.id = c.game_id AND c.active = 1 \
-									order by priority',
-									[],
-									filter_tags
-								).end();
-						}
-
-						get_featured_videos();
-					}
+					get_featured_games
 				).end();
+		},
+		get_featured_games = function (err, result) {
+			if(err) {
+				next.err;
+			}
+
+			data.slider = result;
+			delete data.forum;
+
+			if(req.query.console) {
+				return mysql.open(config.mysql)
+					.query(
+						'select a.*, c.active, \
+						c.featured_date, c.priority, \
+						c.active, b.tags \
+						from anytv_games_consoles a \
+						inner join anytv_game_tags b on \
+						a.id = b.game_id \
+						left join anytv_game_featured c on \
+						a.id = c.game_id AND c.active = 1 \
+						order by priority',
+						[],
+						filter_tags
+					).end();
+			}
+
+			get_featured_videos();
 		},
 		filter_tags = function(err, result) {
 			if(err) {
@@ -97,7 +98,7 @@ exports.get_index = function (req, res, next) {
 			data.games_ids = [];
 			data.featured_games = [];
 			data.featured_games_ids = [];
-			
+
 			for(var i=0; i < result.length; i++) {
 				result[i].platforms = result[i].platforms && result[i].platforms
 					.split(',').map(function(e) {
@@ -143,7 +144,7 @@ exports.get_index = function (req, res, next) {
 
 					delete data.games_ids;
 					delete data.featured_games_ids;
-					
+
 					get_featured_videos();
 				}
 			}, next);
