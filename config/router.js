@@ -30,6 +30,7 @@ module.exports	= function (router, logger) {
 	router.get('/games/:gameid/playlists', games.get_game_playlists);
 	router.get('/news', news.get_news);
 	router.get('/shows', shows.get_shows);
+	router.get('/user/personal/:id', user.get_youtuber_profile);
 	router.all('*', function (req, res) {
 		res.status(404)
 			.send({message : 'Nothing to do here.'});
