@@ -102,7 +102,9 @@ exports.get_youtuber_profile = function(req, res, next) {
 			data.user = result;
 			data.config = {
 				channel : result.custom_fields.youtube_id,
-				playlist: result.custom_fields.youtubeUploads
+				playlist: result.custom_fields.youtubeUploads.length
+					? result.custom_fields.youtubeUploads
+					: 'UU'+result.custom_fields.youtube_id.substr(2)
 			};
 
 			var promises = [];
