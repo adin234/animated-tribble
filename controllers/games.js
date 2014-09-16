@@ -16,6 +16,11 @@ exports.get_games = function (req, res, next) {
 				return get_featured();
 			}
 
+			if(req.query.filter) {
+				data = req.query.filter.split(',');
+				req.query.featured = true;
+			}
+
 			return get_games();
 		},
 		get_featured = function (err, result) {

@@ -1,7 +1,10 @@
 var config 			= require(__dirname + '/../config/config'),
     util			= require(__dirname + '/../helpers/util'),
     mysql			= require(__dirname + '/../lib/mysql'),
-    logger         	= require(__dirname + '/../lib/logger');
+    games 			= require(__dirname + '/games'),
+    logger         	= require(__dirname + '/../lib/logger'),
+    Q				= require('q'),
+    mongo			= require(__dirname + '/../lib/mongoskin');
 
 exports.get_user = function (req, res, next) {
 	var data = {},
@@ -72,11 +75,216 @@ exports.get_user = function (req, res, next) {
 			}
 
 			if(!global.cache.user[req.params.id]) {
-				global.cache.user[req.params.id] = result;
+				global.cache.user[req.params.id] = result[0];
 			}
 
 			res.send(result[0]);
 		};
 
+	start();
+};
+
+exports.get_youtuber_profile = function(req, res, next) {
+	var data = {},
+		start = function() {
+			if(!(global.cache && global.cache.user && global.cache.user[req.params.id])) {
+				return exports.get_user(req,  {
+					send: function(data) {
+						get_youtube(null, data);
+					},
+					status: function(code) {}
+				}, next);
+			}
+
+			get_youtube(null, global.cache.user[req.params.id]);
+		},
+		get_youtube = function (err, result)  {
+			data.user = result;
+			data.config = {
+				channel : result.custom_fields.youtube_id,
+				playlist: result.custom_fields.youtubeUploads
+			};
+
+			var promises = [];
+			var deferred1 = Q.defer();
+			exports.get_games_cast(req, {
+				send: function(d) {
+					data.games_cast = d;
+					deferred1.resolve(d);
+				},
+				status: function(c){}
+			}, next);
+			promises.push(deferred1.promise);
+
+
+			var deferred2 = Q.defer();
+			exports.get_playlists(req, {
+				send: function(d) {
+					data.playlists = d;
+					deferred2.resolve(d);
+				},
+				status: function(c){}
+			}, next);
+			promises.push(deferred2.promise);
+
+			var deferred3 = Q.defer();
+			exports.get_consoles(req, {
+				send: function(d) {
+					data.consoles = d;
+					deferred3.resolve(d);
+				},
+				status: function(c){}
+			}, next);
+			promises.push(deferred3.promise);
+
+			var link = function() {
+				var deferred4 = Q.defer();
+				exports.get_videos(req, {
+					send: function(d) {
+						data.videos = d;
+						data.categories = [];
+						send_response(err, data);
+						deferred4.resolve(d);
+					},
+					status: function(c){}
+				}, next);
+			}
+
+			Q.all(promises).then(link);
+		},
+		send_response = function (err, result) {
+			if (err) {
+				logger.log('warn', 'Error getting the user');
+				return next(err);
+			}
+
+			if(result.length === 0) {
+				return res.status(500).send({message: 'user not found'});
+			}
+
+			res.send(result);
+		},
+		respond = send_response;
+
+	start();
+};
+
+exports.get_games_cast = function(req, res, next) {
+	var data = {},
+		start = function() {
+			if(!(global.cache && global.cache.user && global.cache.user[req.params.id])) {
+				return exports.get_user(req,  {
+					send: function(data) {
+						filter_values(null, data);
+					},
+					status: function(code) {}
+				}, next);
+			}
+
+			filter_values(null, global.cache.user[req.params.id]);
+		},
+		filter_values = function(err, result) {
+			req.query.filter = Object.keys(us.unserialize(result.custom_fields.gamesCast))
+				.join(',');
+
+			games.get_games(req, {
+				send: function(result) {
+					send_response(null, result);
+				},
+				status: function(c){}
+			}, next);
+		},
+		send_response = function (err, result) {
+			if(err) {
+				return next(err);
+			}
+
+			res.send(result);
+		};
+	
+	start();
+};
+
+exports.get_playlists = function(req, res, next) {
+	var data = {},
+		start= function() {
+			mongo.collection('playlists')
+				.find({
+					user_id : parseInt(req.params.id)
+				})
+				.toArray(send_response);
+		},
+		send_response = function (err, result) {
+			if(err) {
+				return next(err);
+			}
+
+			res.send(result);
+		};
+	start();
+};
+
+exports.get_videos = function(req, res, next) {
+	var data = {},
+		start= function() {
+			mongo.collection('videos')
+				.find({
+					user_id : parseInt(req.params.id)
+				})
+				.toArray(send_response);
+		},
+		send_response = function (err, result) {
+			if(err) {
+				return next(err);
+			}
+
+			res.send(result);
+		};
+	start();
+};
+
+exports.get_consoles = function(req, res, next) {
+	var data = {},
+		start = function() {
+			if(!(global.cache && global.cache.user && global.cache.user[req.params.id])) {
+				return exports.get_user(req,  {
+					send: function(data) {
+						filter_values(null, data);
+					},
+					status: function(code) {}
+				}, next);
+			}
+
+			filter_values(null, global.cache.user[req.params.id]);
+		},
+		filter_values = function(err, result) {
+			mysql.open(config.mysql)
+				.query("select field_choices from xf_user_field \
+					where field_id = 'navLinks';",
+					[],
+					format_buffer
+				)
+				.end()
+		},
+		format_buffer = function(err, result) {
+			send_response(null, result);
+		},
+		send_response = function (err, result) {
+			if(err) {
+				return next(err);
+			}
+
+			var consoles = us.unserialize(new Buffer(result[0].field_choices, 'binary')
+				.toString());
+
+			consoles = Object.keys(consoles).map(function(item,i){
+				return {
+					id: item,
+					name: consoles[item]
+				}
+			});
+
+			res.send(consoles);
+		};
 	start();
 };
