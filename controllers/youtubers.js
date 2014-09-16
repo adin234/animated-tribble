@@ -53,7 +53,10 @@ exports.get_data = function (req, res, next) {
 
             mysql.open(config.mysql)
                 .query(
-                    'SELECT user_id, field_value as youtube_id '
+                    'SELECT user_id userId, ('
+                    +'select count(*) as popularity '
+                    +'from xf_user_follow where follow_user_id = userId'
+                    +') popularity, field_value as youtube_id '
                     +' FROM xf_user_field_value'
                     +' WHERE field_id = \'youtube_id\' AND user_id IN ('+ids.join(',')+')'
                     +' ORDER BY user_id desc',

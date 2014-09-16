@@ -53,7 +53,7 @@ exports.get_user = function (req, res, next) {
 			});
 
 			user.custom_fields = custom_field_data;
-			send_response(null, [user]);
+			send_response(null, user);
 		},
 
 		send_response = function (err, result) {
@@ -78,7 +78,7 @@ exports.get_user = function (req, res, next) {
 				global.cache.user[req.params.id] = result[0];
 			}
 
-			res.send(result[0]);
+			res.send(result);
 		};
 
 	start();
