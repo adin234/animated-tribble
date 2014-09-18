@@ -102,16 +102,26 @@ exports.get_game_videos = function (req, res, next) {
 		user,
 		limit,
 		page,
+		regexEscape= function(s) {
+		    return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+		},
 		start = function () {
 			logger.log('info', 'Getting Game Videos');
-			limit 	= req.query.limit || 25;
+			limit 	= parseInt(req.query.limit) || 25;
 			page 	= req.query.page || 1;
+
+			var params = [req.params.gameid];
+			var where = ' where game_id = ? limit 1';
+
+			if(req.params.gameid == 'all' || req.params.gameid == '') {
+				params = [];
+				where = ''
+			}
 
 			mysql.open(config.mysql)
 				.query(
-					'select * from anytv_game_tags \
-					where game_id = ? limit 1',
-					[req.params.gameid],
+					'select * from anytv_game_tags' + where,
+					params,
 					get_tags
 				).end();
 		},
@@ -146,18 +156,33 @@ exports.get_game_videos = function (req, res, next) {
 						}])
 					}
 				).end();
-		}
+		},
 		get_videos = function(err, result) {
 			if (err) {
 				return next(err);
 			}
 
 			if(result.length > 0) {
+				var searchString = typeof req.query.search != 'undefined'
+					? regexEscape(req.query.search)
+					: '';
+
+				var searchRegExp = new RegExp(searchString, 'i');
+
 				var find_params = {
-					'snippet.meta.tags' : {
-						$in : result
-					}
-				}
+					$and : [{
+							'snippet.meta.tags' : {
+								$in : result
+							}
+						},
+						{
+							$or : [
+								{'snippet.title' : searchRegExp},
+								{'snippet.channelTitle' : searchRegExp}
+							]
+						}
+					]
+				};
 
 				if(result[0].tags) {
 					find_params = {
@@ -170,12 +195,20 @@ exports.get_game_videos = function (req, res, next) {
 								'snippet.resourceId.videoId': {
 									$in: result[0].ids
 								}
+							},
+							{
+								$or : [
+									{'snippet.title' : searchRegExp},
+									{'snippet.channelTitle' : searchRegExp}
+								]
 							}
 						]
 					}
 				}
+
 				return mongo.collection('videos')
 					.find(find_params)
+					.sort({"snippet.publishedAt" : -1})
 					.skip((page-1)*limit)
 					.limit(limit)
 					.toArray(send_response);
@@ -202,7 +235,7 @@ exports.get_game_playlists = function (req, res, next) {
 		page,
 		start = function () {
 			logger.log('info', 'Getting Game playlists');
-			limit 	= req.query.limit || 25;
+			limit 	= parseInt(req.query.limit) || 25;
 			page 	= req.query.page || 1;
 
 			mysql.open(config.mysql)
@@ -252,19 +285,33 @@ exports.get_game_playlists = function (req, res, next) {
 	start();
 };
 
+
 exports.get_games_data = function(req, res, next) {
 	var data = {},
 		user,
 		limit,
 		page,
 		start = function() {
-			limit 	= req.query.limit || 25;
+			limit 	= parseInt(req.query.limit) || 25;
 			page 	= req.query.page || 1;
 			get_videos(null, []);
 		},
 		get_videos = function(err, result) {
+			var searchString = typeof req.query.search != 'undefined'
+				? regexEscape(req.query.search)
+				: '';
+
+			var searchRegExp = new RegExp(searchString, 'i');
+
 			return mongo.collection('videos')
-				.find({})
+				.find(
+				    { $or : [
+						{'snippet.title' : searchRegExp},
+						{'snippet.channelTitle' : searchRegExp}
+						]
+					}
+				)
+				.sort({"snippet.publishedAt" : -1})
 				.skip((page-1)*limit)
 				.limit(limit)
 				.toArray(bind_videos);
