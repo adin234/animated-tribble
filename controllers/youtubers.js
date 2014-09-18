@@ -106,7 +106,6 @@ exports.get_youtubers = function (req, res, next) {
     start();
 };
 
-
 exports.get_data = function (req, res, next) {
     var data = {},
         $options,
