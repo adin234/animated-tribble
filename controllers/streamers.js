@@ -25,8 +25,6 @@ exports.get_streamers = function (req, res, next) {
 				return next(err);
 			}
 
-			console.log(result);
-
 			if(result.length === 0) {
 				return res.status(500).send({message: 'No streamers found'});
 			}
