@@ -297,3 +297,19 @@ exports.get_youtubers = function (req, res, next) {
     start();
 };
 
+exports.post_comment = function (res, req, next) {
+    var data = {},
+        start = function (err, next) {
+            send_response(null, req.query);
+        },
+        send_response = function (err, result) {
+            if(err) {
+                return next(err);
+            }
+
+            res.send(result);
+        };
+
+    start();
+};
+
