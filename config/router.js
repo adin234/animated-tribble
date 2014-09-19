@@ -26,6 +26,7 @@ module.exports	= function (router, logger) {
 	router.get('/streamers', streamers.get_streamers);
 	router.get('/streamersdata', streamers.get_streamers_data);
 	router.get('/youtubers', youtubers.get_data);
+	router.post('/youtubers/videos/:id/comment', youtubers.post_comment);
 	router.get('/gamesdata', games.get_games_data);
 	router.get('/games', games.get_games);
 	router.get('/games/:gameid/videos', games.get_game_videos);
