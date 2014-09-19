@@ -66,9 +66,9 @@ exports.get_games = function (req, res, next) {
 			var values = result[0].option_value;
 			var finalvalue = [];
 			for(var i=0; i<values.game_id.length; i++) {
-				if(values.game_id[i].length && 
-					(req.query.featured 
-						? ~data.indexOf(values.game_id[i]) 
+				if(values.game_id[i].length &&
+					(req.query.featured
+						? ~data.indexOf(values.game_id[i])
 						: 1)
 				) {
 					finalvalue.push({
@@ -102,16 +102,26 @@ exports.get_game_videos = function (req, res, next) {
 		user,
 		limit,
 		page,
+		regexEscape= function(s) {
+		    return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+		},
 		start = function () {
 			logger.log('info', 'Getting Game Videos');
-			limit 	= req.query.limit || 25;
+			limit 	= parseInt(req.query.limit) || 25;
 			page 	= req.query.page || 1;
+
+			var params = [req.params.gameid];
+			var where = ' where game_id = ? limit 1';
+
+			if(req.params.gameid == 'all' || req.params.gameid == '') {
+				params = [];
+				where = ''
+			}
 
 			mysql.open(config.mysql)
 				.query(
-					'select * from anytv_game_tags \
-					where game_id = ? limit 1',
-					[req.params.gameid],
+					'select * from anytv_game_tags' + where,
+					params,
 					get_tags
 				).end();
 		},
@@ -146,18 +156,33 @@ exports.get_game_videos = function (req, res, next) {
 						}])
 					}
 				).end();
-		}
+		},
 		get_videos = function(err, result) {
 			if (err) {
 				return next(err);
 			}
 
 			if(result.length > 0) {
+				var searchString = typeof req.query.search != 'undefined'
+					? regexEscape(req.query.search)
+					: '';
+
+				var searchRegExp = new RegExp(searchString, 'i');
+
 				var find_params = {
-					'snippet.meta.tags' : {
-						$in : result
-					}
-				}
+					$and : [{
+							'snippet.meta.tags' : {
+								$in : result
+							}
+						},
+						{
+							$or : [
+								{'snippet.title' : searchRegExp},
+								{'snippet.channelTitle' : searchRegExp}
+							]
+						}
+					]
+				};
 
 				if(result[0].tags) {
 					find_params = {
@@ -170,12 +195,20 @@ exports.get_game_videos = function (req, res, next) {
 								'snippet.resourceId.videoId': {
 									$in: result[0].ids
 								}
+							},
+							{
+								$or : [
+									{'snippet.title' : searchRegExp},
+									{'snippet.channelTitle' : searchRegExp}
+								]
 							}
 						]
 					}
 				}
+
 				return mongo.collection('videos')
 					.find(find_params)
+					.sort({"snippet.publishedAt" : -1})
 					.skip((page-1)*limit)
 					.limit(limit)
 					.toArray(send_response);
@@ -202,7 +235,7 @@ exports.get_game_playlists = function (req, res, next) {
 		page,
 		start = function () {
 			logger.log('info', 'Getting Game playlists');
-			limit 	= req.query.limit || 25;
+			limit 	= parseInt(req.query.limit) || 25;
 			page 	= req.query.page || 1;
 
 			mysql.open(config.mysql)
@@ -248,6 +281,134 @@ exports.get_game_playlists = function (req, res, next) {
 			}
 
 			res.send(result);
+		};
+	start();
+};
+
+
+exports.get_games_data = function(req, res, next) {
+	var data = {},
+		user,
+		limit,
+		page,
+		start = function() {
+			limit 	= parseInt(req.query.limit) || 25;
+			page 	= req.query.page || 1;
+			get_videos(null, []);
+		},
+		get_videos = function(err, result) {
+			var searchString = typeof req.query.search != 'undefined'
+				? regexEscape(req.query.search)
+				: '';
+
+			var searchRegExp = new RegExp(searchString, 'i');
+
+			return mongo.collection('videos')
+				.find(
+				    { $or : [
+						{'snippet.title' : searchRegExp},
+						{'snippet.channelTitle' : searchRegExp}
+						]
+					}
+				)
+				.sort({"snippet.publishedAt" : -1})
+				.skip((page-1)*limit)
+				.limit(limit)
+				.toArray(bind_videos);
+		},
+		bind_videos = function(err, result) {
+			data.videos = result;
+			get_featured_games(null, []);
+		},
+		get_featured_games = function (err, result) {
+		    if(err) {
+		        next.err;
+		    }
+
+		    return mysql.open(config.mysql)
+		        .query(
+		            'select a.*, c.active, \
+		            c.featured_date, c.priority, \
+		            c.active, b.tags \
+		            from anytv_games_consoles a \
+		            inner join anytv_game_tags b on \
+		            a.id = b.game_id \
+		            left join anytv_game_featured c on \
+		            a.id = c.game_id AND c.active = 1 \
+		            order by priority',
+		            [],
+		            filter_tags
+		    ).end();
+		},
+		filter_tags = function(err, result) {
+		    if(err) {
+		        return next(err);
+		    }
+
+		    data.games = [];
+		    data.games_ids = [];
+		    data.featured_games = [];
+		    data.featured_games_ids = [];
+
+		    for(var i=0; i < result.length; i++) {
+		        result[i].platforms = result[i].platforms && result[i].platforms
+		            .split(',').map(function(e) {
+		                return e.trim();
+		            });
+		        result[i].tags = result[i].tags && result[i].tags
+		            .split(',').map(function(e) {
+		                return e.trim();
+		            });
+
+		        if(~(result[i].platforms.indexOf(req.query.console)) || req.query.console == undefined) {
+		            data.games.push(result[i]);
+		            data.games_ids.push(result[i].id);
+		            if(result[i].active) {
+		                data.featured_games.push(result[i]);
+		                data.featured_games_ids.push(result[i].id);
+		            }
+		        }
+		    }
+
+		    return exports.get_games(req, {
+		        send: function(item) {
+		            data.featured_games_tags = [];
+		            data.featured_games.forEach(function(item, i) {
+		                data.featured_games_tags = data.featured_games_tags.concat(item.tags);
+		            });
+
+		            data.games_tags = [];
+		            data.games.forEach(function(item, i) {
+		                data.games_tags = data.games_tags.concat(item.tags);
+		            });
+
+		            data.featured_games = [];
+		            data.games = [];
+		            item.forEach(function(item, i) {
+		                if(~data.games_ids.indexOf(item.id)) {
+		                    data.games.push(item);
+		                    if(~data.featured_games_ids.indexOf(item.id)) {
+		                        data.featured_games.push(item);
+		                    }
+		                }
+		            });
+
+		            delete data.games_ids;
+		            delete data.featured_games_ids;
+		            send_response(null, data);
+		        }
+		    }, next);
+		},
+		send_response = function (err, result) {
+		    if (err) {
+		        logger.log('warn', 'error getting youtubers');
+		        return next(err);
+		    }
+
+		    delete data.featured_games_tags;
+		    delete data.games_tags;
+
+		    res.send(result);
 		};
 	start();
 };
