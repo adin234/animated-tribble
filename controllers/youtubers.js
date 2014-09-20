@@ -119,8 +119,8 @@ exports.get_data = function (req, res, next) {
         },
         get_youtubers = function(err, result) {
             return exports.get_youtubers(req, {
-                send: function(err, result) {
-                    data.youtubers = result.youtubers;
+                send: function(result) {
+                    data.youtubers = result;
                     get_popular_youtubers(null, []);
                 }
             }, next);
@@ -129,8 +129,8 @@ exports.get_data = function (req, res, next) {
             req.query.order = 'popularity';
 
             return exports.get_youtubers(req, {
-                send: function(err, result) {
-                    data.popular_youtubers = result.youtubers;
+                send: function(result) {
+                    data.popular_youtubers = result;
                     get_featured_games(null, []);
                 }
             }, next);
@@ -307,7 +307,8 @@ exports.get_youtubers = function (req, res, next) {
 
             for(var key in userChannelIndex) {
                 var videos = result.filter(function(element) {
-                    return element.snippet.channelId == userChannelIndex[key].youtube_id;
+                    return element.snippet.channelId 
+                        == userChannelIndex[key].youtube_id;
                 });
 
                     userChannelIndex[key]['video'] = videos[0];
@@ -327,10 +328,36 @@ exports.get_youtubers = function (req, res, next) {
     start();
 };
 
-exports.post_comment = function (res, req, next) {
+exports.post_comment = function (req, res, next) {
     var data = {},
         start = function (err, next) {
-            send_response(null, req.query);
+            if(!req.body.user_id == process.cache.access[req.body.access_token]
+                .user.user_id) {
+                send_response('invalid token', []);
+            }
+
+            mysql.open(config.mysql)
+                .query(
+                    'INSERT INTO anytv_comments VALUES(NULL, ?, ?, ?, ?, ?)',
+                    [   req.body.user_id, req.body.username,
+                        req.params.id, req.body.message,
+                        parseInt((+new Date)/1000)],
+                    create_notification
+                ).end();
+        },
+        create_notification = function (err, result) {
+            if(err) {
+                return next(err);
+            }
+
+            mysql.open(config.mysql)
+                .query(
+                    'INSERT INTO xf_news_feed VALUES(NULL, ?, ?, \
+                        \'anytv-comment\', ?, \'insert\', ?, "")',
+                    [   req.body.user_id, req.body.username,
+                        req.params.id, parseInt((+new Date)/1000)],
+                    send_response
+                ).end();
         },
         send_response = function (err, result) {
             if(err) {
@@ -340,5 +367,26 @@ exports.post_comment = function (res, req, next) {
             res.send(result);
         };
 
+    start();
+};
+
+exports.get_comments = function (req, res, next) {
+    var data = {},
+        start = function (err, next) {
+            mysql.open(config.mysql)
+                .query(
+                    'SELECT * FROM anytv_comments WHERE video_id = ? \
+                    ORDER BY comment_id DESC',
+                    [req.params.id],
+                    send_response
+                ).end();
+        },
+        send_response = function (err, result) {
+            if(err) {
+                return next(err);
+            }
+
+            res.send(result);
+        };
     start();
 };

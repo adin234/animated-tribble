@@ -2,6 +2,7 @@ var loc			= __dirname + '/../controllers/',
 	index 		= require(loc + 'index'),
 	user 		= require(loc + 'user'),
 	games 		= require(loc + 'games'),
+	login 		= require(loc + 'login'),
 	news 		= require(loc + 'news'),
 	shows 		= require(loc + 'shows'),
 	youtubers 	= require(loc + 'youtubers'),
@@ -15,17 +16,22 @@ module.exports	= function (router, logger) {
 		res.setHeader('Access-Control-Allow-Origin', '*');
 		logger.log('debug', '--REQUEST BODY--', req.body);
 		logger.log('debug', '--REQUEST QUERY--', req.query);
+		process.cache = process.cache || {};
 		if(req.query.bust === 1) {
 			process.cache = {};
 		}
+		console.log(process.cache);
 		next();
 	});
+
+	router.post('/login', login.login);
 
 	router.get('/index', index.get_index);
 	router.get('/user/:id', user.get_user);
 	router.get('/streamers', streamers.get_streamers);
 	router.get('/streamersdata', streamers.get_streamers_data);
 	router.get('/youtubers', youtubers.get_data);
+	router.get('/youtubers/videos/:id/comment', youtubers.get_comments);
 	router.post('/youtubers/videos/:id/comment', youtubers.post_comment);
 	router.get('/gamesdata', games.get_games_data);
 	router.get('/games', games.get_games);
