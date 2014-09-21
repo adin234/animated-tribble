@@ -28,7 +28,6 @@ exports.login = function (req, res, next) {
 			curl.get
 				.to(config.community.url, 80, '/zh/api/index.php?users/me')
 				.send({
-					'users/me': null,
 					oauth_token: result.access_token
 				}).then(send_response);
 		},
