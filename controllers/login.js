@@ -26,8 +26,9 @@ exports.login = function (req, res, next) {
 
 			data.access = result;
 			curl.get
-				.to('dev.gamers.tm', 80, '/zh/api/users/me')
+				.to(config.community.url, 80, '/zh/api/users/me')
 				.send({
+					'users/me': null,
 					oauth_token: result.access_token
 				}).then(send_response);
 		},
