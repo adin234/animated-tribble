@@ -85,12 +85,16 @@ exports.cleanString = function (s) {
 exports.stringify = function (obj) {
     var ret = [],
         key;
-
     for (key in obj) {
-        ret.push(encodeURIComponent(key) + '=' + encodeURIComponent(obj[key]));
+        if (obj[key] === null) {
+            ret.push(encodeURIComponent(key));
+        }
+        else {
+            ret.push(encodeURIComponent(key) + '=' + encodeURIComponent(obj[key]));
+        }
     }
-
     return ret.join('&');
+
 };
 
 exports.get_user_from_url = function (url) {
