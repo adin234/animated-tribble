@@ -11,7 +11,7 @@ exports.login = function (req, res, next) {
 		user,
 		start = function () {
 			curl.post
-				.to('dev.gamers.tm', 80, '/zh/api/oauth/token')
+				.to(config.community.url, 80, '/zh/api/index.php?oauth/token')
 				.send({
 					username: 	req.body.username,
 					password: 	req.body.password,
@@ -26,7 +26,7 @@ exports.login = function (req, res, next) {
 
 			data.access = result;
 			curl.get
-				.to(config.community.url, 80, '/zh/api/users/me')
+				.to(config.community.url, 80, '/zh/api/index.php?users/me')
 				.send({
 					'users/me': null,
 					oauth_token: result.access_token
