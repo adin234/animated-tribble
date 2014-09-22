@@ -27,6 +27,7 @@ module.exports	= function (router, logger) {
 	router.post('/login', login.login);
 
 	router.get('/index', index.get_index);
+	router.get('/scrape/:twitch', index.get_scrape);
 	router.get('/user/:id', user.get_user);
 	router.get('/streamers', streamers.get_streamers);
 	router.get('/streamersdata', streamers.get_streamers_data);

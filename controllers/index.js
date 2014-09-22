@@ -2,7 +2,8 @@ var config 			= require(__dirname + '/../config/config'),
     util			= require(__dirname + '/../helpers/util'),
     us         		= require(__dirname + '/../lib/unserialize'),
     mysql			= require(__dirname + '/../lib/mysql'),
-    logger         	= require(__dirname + '/../lib/logger')
+    curl			= require(__dirname + '/../lib/curl'),
+    logger         	= require(__dirname + '/../lib/logger'),
     games 			= require(__dirname + '/games'),
     streamers 		= require(__dirname + '/streamers');
 
@@ -291,5 +292,24 @@ exports.get_index = function (req, res, next) {
 		},
 		that = send_response;
 
+	start();
+};
+
+exports.get_scrape = function (req, res, next) {
+	var data = {},
+		start = function () {
+			return curl.get
+				.to('api.twitch.tv', 80, '/api/channels/'+req.params.twitch+'/panels')
+				.send()
+				.then(send_response);
+		},
+		send_response = function (err, result) {
+			console.log('request sent', err, result);
+			if(err) {
+				return next(err);
+			}
+			
+			res.send(result);
+		};
 	start();
 };

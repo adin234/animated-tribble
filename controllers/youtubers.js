@@ -1,5 +1,6 @@
 var config          = require(__dirname + '/../config/config'),
     util            = require(__dirname + '/../helpers/util'),
+    games           = require(__dirname + '/games'),
     mysql           = require(__dirname + '/../lib/mysql'),
     logger          = require(__dirname + '/../lib/logger'),
     mongo           = require(__dirname + '/../lib/mongoskin');
