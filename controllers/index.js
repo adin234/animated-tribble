@@ -20,6 +20,10 @@ exports.get_index = function (req, res, next) {
 				)
 		},
 		get_slider_options = function(err, result) {
+			if(err) {
+				console.log('No results');
+				return next(err);
+			}
 			result = result[0];
 			data.forum = us.unserialize(new Buffer(result.option_value, 'binary')
 					.toString()).join(',');

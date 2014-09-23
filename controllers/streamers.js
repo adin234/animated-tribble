@@ -1,8 +1,120 @@
 var config 			= require(__dirname + '/../config/config'),
     util			= require(__dirname + '/../helpers/util'),
     mysql			= require(__dirname + '/../lib/mysql'),
+    games			= require(__dirname + '/games'),
     curl			= require(__dirname + '/../lib/curl'),
     logger         	= require(__dirname + '/../lib/logger');
+
+exports.get_youtube_streamers = function (req, res, next) {
+	var data = {},
+		user,
+		index = 0,
+		start = function () {
+			mysql.open(config.mysql)
+				.query('SELECT user.*, refresh.*, youtube.field_value youtube \
+					FROM xf_user_field_value refresh INNER JOIN \
+					xf_user_field_value youtube ON \
+					youtube.user_id = refresh.user_id  INNER \
+					JOIN xf_user user ON user.user_id = refresh.user_id \
+					WHERE youtube.field_id = \
+					"youtube_id" AND refresh.field_id = "refresh_token"',
+					[],
+					get_token)
+				.end();
+		},
+		get_token = function(err, result) {
+			if(err) {
+				console.log('error in getting the refresh');
+				return next(err);
+			}
+			result.forEach(function(user) {
+				if(user.field_value.trim().length) {
+					user.field_id = new Buffer( user.field_id, 'binary' )
+						.toString();
+					data[user.youtube] = { user: user }
+					index++;
+					curl.post
+					.to(
+						'accounts.google.com',
+						443,
+						'/o/oauth2/token'
+					)
+					.secured()
+					.send({
+						client_id: config.api.client_id,
+						client_secret: config.api.client_secret,
+						refresh_token: user.field_value,
+						grant_type: 'refresh_token'
+					}).then(get_streams);
+				}
+			});
+		},
+		get_streams = function(err, result) {
+			if(err) {
+				console.log('error in getting stream');
+				return next(err);
+			}
+
+			curl.get
+				.to(
+					'www.googleapis.com',
+					443,
+					'/youtube/v3/liveBroadcasts'
+				)
+				.secured()
+				.add_header(
+					'Authorization',
+					'Bearer '+result.access_token
+				)
+				.send({
+					part: 'snippet',
+					broadcastStatus: 'active'
+				})
+				.then(update_status);
+		},
+		update_status = function( err, result) {
+			index--;
+			if(result && result.items && result.items.length) {
+				data[result.items[0].snippet.channelId].streams = result;
+			}
+			console.log('INDEX ', index);
+			if(index < 1) {
+				format_response(null, data);
+			}
+		},
+		format_response = function (err, result) {
+			response = {streamers: []};
+			console.log('result', result);
+			for(i in result) {
+				item = result[i];
+				console.log('streamas', item.streams)
+				if(item.streams) {
+					item.streams.items.forEach(function(iitem) {
+						var topush = JSON
+							.parse(JSON.stringify(item.user))
+
+						topush.youtube = iitem;
+
+						response.streamers.push(topush);
+					});
+				}
+				console.log(i);
+			};
+
+			send_response(err, response);
+		},
+		send_response = function( err, result) {
+			if(err) {
+				console.log('there is an error');
+				return next(err);
+			}
+
+			console.log('will send result');
+
+			res.send(result);
+		};
+	start();
+};
 
 exports.get_streamers = function (req, res, next) {
 	var data = {},
@@ -101,7 +213,7 @@ exports.get_streamers_data = function(req, res, next) {
 			get_streamers();
 		},
 		get_streamers = function() {
-			streamers.get_streamers(req, {
+			exports.get_streamers(req, {
 				send: function(result) {
 					data.streamers = result.streamers;
 					get_videos(null, []);
