@@ -120,8 +120,15 @@ exports.get_youtube_streamers = function (req, res, next) {
 exports.get_streamers = function (req, res, next) {
 	var data = {},
 		user,
+		cache,
 		start = function () {
 			logger.log('info', 'Getting Streamers');
+			cache = util.get_cache('streamers');
+
+			if(cache) {
+				return format_buffer(null, cache);
+			}
+
 			mysql.open(config.mysql)
 				.query(
 					'SELECT * FROM xf_user_field_value INNER JOIN \
@@ -132,6 +139,10 @@ exports.get_streamers = function (req, res, next) {
 				).end();
 		},
 		format_buffer = function (err, result) {
+			if(!cache) {
+				util.set_cache('streamers', result);
+			}
+
 			var request = [];
 			if (err) {
 				logger.log('warn', 'Error getting the twitch');
@@ -160,6 +171,7 @@ exports.get_streamers = function (req, res, next) {
 				.send({
 					channel: request.join(',')
 				}).then(format_response);
+
 		},
 		format_response = function (err, result) {
 			var online_streamers = [];
