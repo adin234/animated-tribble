@@ -10,6 +10,7 @@ exports.get_youtube_streamers = function (req, res, next) {
 		user,
 		index = 0,
 		start = function () {
+
 			mysql.open(config.mysql)
 				.query('SELECT user.*, refresh.*, youtube.field_value youtube \
 					FROM xf_user_field_value refresh INNER JOIN \
@@ -207,9 +208,19 @@ exports.get_streamers_data = function(req, res, next) {
 		user,
 		limit,
 		page,
+		cacheKey = 'streamers.data',
 		start = function() {
+
 			limit 	= parseInt(req.query.limit) || 25;
 			page 	= req.query.page || 1;
+
+			var cache = util.get_cache(cacheKey+'.'+page);
+
+			if(cache && typeof req.query.filter == 'undefined' && typeof req.query.console == 'undefined') {
+				console.log('From Cache');
+				return res.send(cache);
+			}
+
 			get_streamers();
 		},
 		get_streamers = function() {
@@ -332,6 +343,7 @@ exports.get_streamers_data = function(req, res, next) {
 		    delete data.featured_games_tags;
 		    delete data.games_tags;
 
+		    util.set_cache(cacheKey+'.'+page, result);
 		    res.send(result);
 		};
 	start();

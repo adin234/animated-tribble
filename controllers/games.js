@@ -10,8 +10,16 @@ var config 			= require(__dirname + '/../config/config'),
 exports.get_games = function (req, res, next) {
 	var data = {},
 		user,
+		cacheKey = 'games.data',
 		start = function () {
 			logger.log('info', 'Getting Games');
+			var cache = util.get_cache(cacheKey);
+
+            if(cache && typeof req.query.filter == 'undefined' && typeof req.query.console == 'undefined') {
+                console.log('From Cache');
+                return res.send(cache);
+            }
+
 			if(req.query.featured) {
 				return get_featured();
 			}
@@ -91,6 +99,8 @@ exports.get_games = function (req, res, next) {
 				return res.status(500).send({message: 'user not found'});
 			}
 
+			util.set_cache(cacheKey, result[0]);
+
 			res.send(result[0]);
 		};
 
@@ -102,13 +112,22 @@ exports.get_game_videos = function (req, res, next) {
 		user,
 		limit,
 		page,
+		cacheKey = 'games.video.'+req.params.gameid,
 		regexEscape= function(s) {
 		    return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 		},
 		start = function () {
 			logger.log('info', 'Getting Game Videos');
+
 			limit 	= parseInt(req.query.limit) || 25;
 			page 	= req.query.page || 1;
+
+			var cache = util.get_cache(cacheKey+'.'+page);
+
+            if(cache && typeof req.query.filter == 'undefined' && typeof req.query.console == 'undefined') {
+                console.log('From Cache');
+                return res.send(cache);
+            }
 
 			var params = [req.params.gameid];
 			var where = ' where game_id = ? limit 1';
@@ -223,6 +242,8 @@ exports.get_game_videos = function (req, res, next) {
 				return next(err);
 			}
 
+			util.set_cache(cacheKey+'.'+page, result);
+
 			res.send(result);
 		};
 	start();
@@ -233,10 +254,18 @@ exports.get_game_playlists = function (req, res, next) {
 		user,
 		limit,
 		page,
+		cacheKey = 'games.playlist.'+req.params.gameid,
 		start = function () {
 			logger.log('info', 'Getting Game playlists');
 			limit 	= parseInt(req.query.limit) || 25;
 			page 	= req.query.page || 1;
+
+			var cache = util.get_cache(cacheKey+'.'+page);
+
+            if(cache && typeof req.query.filter == 'undefined' && typeof req.query.console == 'undefined') {
+                console.log('From Cache');
+                return res.send(cache);
+            }
 
 			mysql.open(config.mysql)
 				.query(
@@ -280,6 +309,8 @@ exports.get_game_playlists = function (req, res, next) {
 				return next(err);
 			}
 
+			util.set_cache(cacheKey+'.'+page, result);
+
 			res.send(result);
 		};
 	start();
@@ -291,9 +322,17 @@ exports.get_games_data = function(req, res, next) {
 		user,
 		limit,
 		page,
+		cacheKey = 'games.page',
 		start = function() {
 			limit 	= parseInt(req.query.limit) || 25;
 			page 	= req.query.page || 1;
+			var cache = util.get_cache(cacheKey+'.'+page);
+
+            if(cache && typeof req.query.filter == 'undefined' && typeof req.query.console == 'undefined') {
+                console.log('From Cache');
+                return res.send(cache);
+            }
+
 			get_videos(null, []);
 		},
 		get_videos = function(err, result) {
@@ -407,6 +446,8 @@ exports.get_games_data = function(req, res, next) {
 
 		    delete data.featured_games_tags;
 		    delete data.games_tags;
+
+		    util.set_cache(cacheKey+'.'+page, result);
 
 		    res.send(result);
 		};

@@ -1,4 +1,7 @@
-var crypto = require('crypto');
+var crypto = require('crypto'),
+    NodeCache = require( "node-cache" ),
+    myCache = new NodeCache( { stdTTL: 600, checkperiod: 620 } );
+
 /**
 	Utilities
 */
@@ -102,3 +105,20 @@ exports.get_user_from_url = function (url) {
     tokens = tokens.filter(function(e) { return e!=undefined });
     return tokens[tokens.length-1];
 };
+
+exports.set_cache = function(key, value, ttl) {
+    myCache.set(key, value);
+
+    if(typeof ttl != 'undefined') {
+        myCache.ttl(key, ttl)
+    }
+
+    return myCache;
+};
+
+exports.get_cache = function(key, callback) {
+    var cache = myCache.get(key, callback);
+    if(!Object.keys(cache).length) return false;
+
+    return cache[key];
+}

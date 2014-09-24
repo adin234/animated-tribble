@@ -13,7 +13,15 @@ exports.get_data = function (req, res, next) {
         userChannelIndex = {},
         limit,
         page,
+        cacheKey = 'youtubers.data',
         start = function () {
+            var cache = util.get_cache(cacheKey);
+
+            if(cache && typeof req.query.filter == 'undefined' && typeof req.query.console == 'undefined') {
+                console.log('From Cache');
+                return res.send(cache);
+            }
+
             get_youtubers(null, []);
         },
         get_youtubers = function(err, result) {
@@ -121,6 +129,8 @@ exports.get_data = function (req, res, next) {
 
             delete data.featured_games_tags;
             delete data.games_tags;
+
+            util.set_cache(cacheKey, result);
 
             res.send(result);
         };
@@ -279,7 +289,15 @@ exports.post_comment = function (req, res, next) {
 
 exports.get_comments = function (req, res, next) {
     var data = {},
+        cacheKey = 'youtubers.user.'+req.params.id,
         start = function (err, next) {
+            var cache = util.get_cache(cacheKey);
+
+            if(cache && typeof req.query.filter == 'undefined' && typeof req.query.console == 'undefined') {
+                console.log('From Cache');
+                return res.send(cache);
+            }
+
             mysql.open(config.mysql)
                 .query(
                     'SELECT * FROM anytv_comments WHERE video_id = ? \
@@ -293,6 +311,7 @@ exports.get_comments = function (req, res, next) {
                 return next(err);
             }
 
+            util.set_cache(cacheKey, result);
             res.send(result);
         };
     start();

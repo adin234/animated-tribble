@@ -9,7 +9,15 @@ var config 			= require(__dirname + '/../config/config'),
 exports.get_shows = function (req, res, next) {
 	var data = {},
 		user,
+		cacheKey = 'show.page',
 		start = function () {
+			var cache = util.get_cache(cacheKey);
+
+            if(cache && typeof req.query.filter == 'undefined' && typeof req.query.console == 'undefined') {
+                console.log('From Cache');
+                return res.send(cache);
+            }
+
 			if(req.query.playlist) {
 				data.playlist = req.query.playlist;
 				data.page_token = req.query.pageToken || null;

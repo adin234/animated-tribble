@@ -9,7 +9,15 @@ var config 			= require(__dirname + '/../config/config'),
 exports.get_user = function (req, res, next) {
 	var data = {},
 		user,
+		cacheKey = 'index.user.'+req.params.id,
 		start = function () {
+			var cache = util.get_cache(cacheKey);
+
+			if(cache && typeof req.query.filter == 'undefined' && typeof req.query.console == 'undefined') {
+				console.log('From Cache');
+				return res.send(cache);
+			}
+
 			if(global.cache && global.cache.user && global.cache.user[req.params.id]) {
 				return send_response(null, global.cache.user[req.params.id]);
 			}
@@ -31,7 +39,7 @@ exports.get_user = function (req, res, next) {
 
 			if(result.length === 0) {
 				logger.log('warn', 'user does not exist');
-				return send_response({message: "User does not exist"});	
+				return send_response({message: "User does not exist"});
 			}
 
 			user = result[0];
@@ -78,6 +86,8 @@ exports.get_user = function (req, res, next) {
 				global.cache.user[req.params.id] = result[0];
 			}
 
+			util.set_cache(cacheKey, result);
+
 			res.send(result);
 		};
 
@@ -86,7 +96,15 @@ exports.get_user = function (req, res, next) {
 
 exports.get_youtuber_profile = function(req, res, next) {
 	var data = {},
+		cacheKey = 'index.profile.'+req.params.id,
 		start = function() {
+			var cache = util.get_cache(cacheKey);
+
+            if(cache && typeof req.query.filter == 'undefined' && typeof req.query.console == 'undefined') {
+                console.log('From Cache');
+                return res.send(cache);
+            }
+
 			if(!(global.cache && global.cache.user && global.cache.user[req.params.id])) {
 				return exports.get_user(req,  {
 					send: function(data) {
@@ -164,6 +182,8 @@ exports.get_youtuber_profile = function(req, res, next) {
 				return res.status(500).send({message: 'user not found'});
 			}
 
+			util.set_cache(cacheKey, result);
+
 			res.send(result);
 		},
 		respond = send_response;
@@ -203,7 +223,7 @@ exports.get_games_cast = function(req, res, next) {
 
 			res.send(result);
 		};
-	
+
 	start();
 };
 

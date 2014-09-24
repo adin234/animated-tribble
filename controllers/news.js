@@ -10,7 +10,15 @@ var config 			= require(__dirname + '/../config/config'),
 exports.get_news = function (req, res, next) {
 	var data = {},
 		user,
+		cacheKey = 'news.page',
 		start = function () {
+			var cache = util.get_cache(cacheKey);
+
+            if(cache && typeof req.query.filter == 'undefined' && typeof req.query.console == 'undefined') {
+                console.log('From Cache');
+                return res.send(cache);
+            }
+
 			if(req.query.playlist) {
 				data.playlist = req.query.playlist;
 				data.page_token = req.query.pageToken || null;
@@ -107,7 +115,7 @@ exports.get_news = function (req, res, next) {
 			}
 
 			data.categories = options;
-			
+
 			return send_response(err, data);
 		},
 		send_response = function (err, result) {
@@ -119,6 +127,8 @@ exports.get_news = function (req, res, next) {
 			if(!result || result.length === 0) {
 				return res.status(500).send({message: 'user not found'});
 			}
+
+			util.set_cache(cacheKey, result);
 
 			res.send(result);
 		};

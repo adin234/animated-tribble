@@ -11,13 +11,21 @@ exports.get_index = function (req, res, next) {
 	var data = {},
 		$options,
 		date,
+		cacheKey = 'index.page',
 		start = function () {
+			var cache = util.get_cache(cacheKey);
+
+			if(cache && typeof req.query.filter == 'undefined' && typeof req.query.console == 'undefined') {
+				console.log('From Cache');
+				return res.send(cache);
+			}
+
 			mysql.open(config.mysql)
 				.query(
 					'SELECT option_value FROM EWRporta_options WHERE option_id = ?',
 					['recentnews_forum'],
 					get_slider_options
-				)
+				);
 		},
 		get_slider_options = function(err, result) {
 			if(err) {
@@ -292,6 +300,8 @@ exports.get_index = function (req, res, next) {
 			delete data.featured_games_tags;
 			delete data.games_tags;
 
+			util.set_cache(cacheKey, result);
+
 			res.send(result);
 		},
 		that = send_response;
@@ -301,7 +311,15 @@ exports.get_index = function (req, res, next) {
 
 exports.get_scrape = function (req, res, next) {
 	var data = {},
+		cacheKey = 'index.scrape',
 		start = function () {
+			var cache = util.get_cache(cacheKey);
+
+			if(cache && typeof req.query.filter == 'undefined' && typeof req.query.console == 'undefined') {
+				console.log('From Cache');
+				return res.send(cache);
+			}
+
 			return curl.get
 				.to('api.twitch.tv', 80, '/api/channels/'+req.params.twitch+'/panels')
 				.send()
@@ -312,7 +330,9 @@ exports.get_scrape = function (req, res, next) {
 			if(err) {
 				return next(err);
 			}
-			
+
+			util.set_cache(cacheKey, result);
+
 			res.send(result);
 		};
 	start();
