@@ -58,6 +58,9 @@ exports.get_news = function (req, res, next) {
 				.send(request_data).then(send_response);
 		},
 		get_news_videos = function (err, result) {
+			if(err) {
+				return next(err);	
+			}
 			data.config = {};
 			data.config.channel = new Buffer(result[0].channel, 'binary').toString();
 			data.config.playlist = new Buffer(result[0].playlist, 'binary').toString();
