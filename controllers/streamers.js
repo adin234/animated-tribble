@@ -125,7 +125,7 @@ exports.get_streamers = function (req, res, next) {
 			logger.log('info', 'Getting Streamers');
 			cache = JSON.parse(JSON.stringify(util.get_cache('streamers')));
 
-			if(!(typeof cache === 'undefined' && cache)) {
+			if(!(typeof cache === 'undefined' || cache)) {
 				return format_buffer(null, cache);
 			}
 
