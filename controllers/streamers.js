@@ -123,7 +123,7 @@ exports.get_streamers = function (req, res, next) {
 		cache,
 		start = function () {
 			logger.log('info', 'Getting Streamers');
-			cache = util.get_cache('streamers');
+			cache = JSON.parse(JSON.stringify(util.get_cache('streamers')));
 
 			if(cache) {
 				return format_buffer(null, cache);
@@ -140,7 +140,7 @@ exports.get_streamers = function (req, res, next) {
 		},
 		format_buffer = function (err, result) {
 			if(!cache) {
-				util.set_cache('streamers', result);
+				util.set_cache('streamers', JSON.parse(JSON.stringify(result)));
 			}
 
 			var request = [];
