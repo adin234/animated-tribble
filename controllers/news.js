@@ -14,7 +14,8 @@ exports.get_news = function (req, res, next) {
 		start = function () {
 			var cache = util.get_cache(cacheKey);
 
-            if(cache && typeof req.query.filter == 'undefined' && typeof req.query.console == 'undefined') {
+            if(cache && typeof req.query.filter == 'undefined' 
+            	&& typeof req.query.console == 'undefined') {
                 console.log('From Cache');
                 return res.send(cache);
             }
@@ -130,8 +131,11 @@ exports.get_news = function (req, res, next) {
 			if(!result || result.length === 0) {
 				return res.status(500).send({message: 'user not found'});
 			}
-
-			util.set_cache(cacheKey, result);
+			
+			if(!cache && typeof req.query.filter == 'undefined' 
+            	&& typeof req.query.console == 'undefined') {
+				util.set_cache(cacheKey, result);
+            }
 
 			res.send(result);
 		};
