@@ -135,7 +135,8 @@ exports.get_news = function (req, res, next) {
 			
 			if(typeof cache =='undefined' 
 				&& typeof req.query.filter == 'undefined' 
-            	&& typeof req.query.console == 'undefined') {
+            	&& typeof req.query.console == 'undefined'
+            	&& typeof req.query.playlist == 'undefined') {
 				util.set_cache(cacheKey, result);
             }
 
