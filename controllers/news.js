@@ -132,7 +132,8 @@ exports.get_news = function (req, res, next) {
 				return res.status(500).send({message: 'user not found'});
 			}
 			
-			if(!cache && typeof req.query.filter == 'undefined' 
+			if(typeof cache =='undefined' 
+				&& typeof req.query.filter == 'undefined' 
             	&& typeof req.query.console == 'undefined') {
 				util.set_cache(cacheKey, result);
             }
