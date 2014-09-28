@@ -246,6 +246,22 @@ exports.get_index = function (req, res, next) {
 				.find(where)
 				.toArray(function(err, result) {
 					data.latest_videos = result;
+					get_most_viewed();
+				});
+		},
+		get_most_viewed = function (err, result) {
+			mongo.collection('videos')
+				.find()
+				.sort({
+					'snippet.meta.statistics.viewCount': -1
+				})
+				.limit(20)
+				.toArray(function(err, result) {
+					if(err) {
+						return next(err);
+					}
+
+					data.most_viewed = result;
 					get_featured_youtubers();
 				});
 		},
