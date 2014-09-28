@@ -25,7 +25,10 @@ exports.get_user = function (req, res, next) {
 			logger.log('info', 'Getting User');
 			mysql.open(config.mysql)
 				.query(
-					'SELECT * FROM xf_user where user_id = ? LIMIT 1',
+					'SELECT * FROM xf_user a '
+					+'INNER JOIN xf_user_profile b on '
+					+'a.user_id = b.user_id '
+					+'where a.user_id = ? LIMIT 1',
 					[req.params.id],
 					get_custom_fields
 				).end();
@@ -117,6 +120,10 @@ exports.get_youtuber_profile = function(req, res, next) {
 			get_youtube(null, global.cache.user[req.params.id]);
 		},
 		get_youtube = function (err, result)  {
+			if(err) {
+				return next(err);
+			}
+
 			data.user = result;
 			data.config = {
 				channel : result.custom_fields.youtube_id,
