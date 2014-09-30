@@ -244,27 +244,97 @@ exports.get_index = function (req, res, next) {
 
 			mongo.collection('videos')
 				.find(where)
-				.toArray(function(err, result) {
-					data.latest_videos = result;
-					get_featured_youtubers();
-				});
+				.sort({
+					'snippet.publishedAt' : -1
+				})
+				.toArray(get_most_viewed);
+		},
+		get_most_viewed = function (err, result) {
+			if(err) {
+				return next(err);
+			}
+
+			data.latest_videos = result;
+			mongo.collection('videos')
+				.find()
+				.sort({
+					'snippet.meta.statistics.viewCount': -1
+				})
+				.limit(20)
+				.toArray(get_featured_youtubers);
 		},
 		get_featured_youtubers = function (err, result) {
+			if(err) {
+				return next(err);
+			}
+
+			data.most_viewed = result;
 			mysql.open(config.mysql)
 				.query(
 					'select * from anytv_user_featured \
 					where active = 1 order by priority asc',
 					[],
-					function(err, result) {
-						data.featured_users = result.map(function(item, i) {
-							return item.user_id;
-						}).join(',');
-
-						get_users();
-					}
+					get_recent_threads
 				).end();
 		},
+		get_recent_threads = function (err, result) {
+			if(err) {
+				return next(err);
+			}
+
+			data.featured_users = result.map(function(item, i) {
+				return item.user_id;
+			}).join(',');
+			
+			curl.get
+				.to(
+					config.community.url,
+					80,
+					'/zh/api/index.php')
+				.send({
+					'threads/recent': null
+				})
+				.then(get_threads);
+		},
+		get_threads = function (err, result) {
+			if(err) {
+				return next(err);
+			}
+			data.countThreads = 0;
+			data.recent_threads = [];
+			result.threads.forEach(function(item, i){
+				var tosend = {};
+				var name = 'threads/'+item.thread_id;
+				tosend[name] = null;
+				data.countThreads++;
+				curl.get
+					.to(
+						config.community.url,
+						80,
+						'/zh/api/index.php')
+					.send(tosend)
+					.then(currate_threads)
+			});
+		},
+		currate_threads = function(err, result) {
+			if(err) {
+				return next(err);
+			}
+
+			data.countThreads--;
+			data.recent_threads.push(result.thread);
+
+			if(!data.countThreads) {
+				get_users();
+			}
+		},
 		get_users = function (err, result) {
+			if(err) {
+				return next(err);
+			}
+
+			delete data.countThreads;
+
 			mysql.open(config.mysql)
 				.query(
 					'select user_id, username \
