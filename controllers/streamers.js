@@ -140,7 +140,7 @@ exports.get_streamers = function (req, res, next) {
 		},
 		format_buffer = function (err, result) {
 			if(!cache) {
-				util.set_cache('streamers', JSON.parse(JSON.stringify(result)));
+				util.set_cache('streamers', JSON.parse(JSON.stringify(result)), 30);
 			}
 
 			var request = [];
