@@ -15,9 +15,15 @@ exports.get_data = function (req, res, next) {
         page,
         cacheKey = 'youtubers.data',
         start = function () {
+            limit   = parseInt(req.query.limit) || 25;
+            page    = req.query.page || 1;
+            cons = req.query.console || '';
+            console.log(cons);
+            cacheKey = cacheKey+page+cons;
+
             var cache = util.get_cache(cacheKey);
 
-            if(cache && typeof req.query.filter == 'undefined' && typeof req.query.console == 'undefined') {
+            if(cache && typeof req.query.filter == 'undefined') {
                 console.log('From Cache');
                 return res.send(cache);
             }

@@ -117,6 +117,117 @@ exports.get_youtube_streamers = function (req, res, next) {
 	start();
 };
 
+exports.get_is_streaming = function (req, res, next) {
+var data = {},
+		twich,
+		youtube,
+		cacheKey = 'streaming.is_streaming'
+		start = function() {
+			twitch = req.params.twitch || false;
+			youtube = req.params.youtube || false;
+
+			var cache = util.get_cache(cacheKey+'.'+twitch+'.'+youtube);
+
+			if(cache) {
+				console.log('From Cache');
+				return res.send(cache);
+			}
+
+			data.youtube = {};
+			data.twitch = {};
+
+			check_twitch();
+		},
+		check_twitch = function() {
+			curl.get
+				.to('api.twitch.tv', 443, '/kraken/streams/'+twitch)
+				.secured()
+				.send()
+				.then(bind_twitch_data);
+		},
+		bind_twitch_data = function(err, result) {
+			data.twitch = result;
+			check_youtube();
+		},
+		check_youtube = function() {
+			mysql.open(config.mysql)
+				.query('SELECT refresh.*, youtube.field_value youtube \
+					FROM xf_user_field_value refresh \
+					INNER JOIN xf_user_field_value youtube ON youtube.user_id = refresh.user_id  \
+					WHERE youtube.field_value = "'+youtube+'" \
+					AND youtube.field_id = "youtube_id" \
+					AND refresh.field_id = "refresh_token"',
+					[],
+					get_token)
+				.end();
+		},
+		get_token = function(err, result) {
+			if(result.length) {
+				return send_response();
+			}
+			if(err) {
+				console.log('error in getting the refresh');
+				return next(err);
+			}
+
+			curl.post
+				.to(
+					'accounts.google.com',
+					443,
+					'/o/oauth2/token'
+				)
+				.secured()
+				.send({
+					client_id: config.api.client_id,
+					client_secret: config.api.client_secret,
+					refresh_token: result[0].field_value,
+					grant_type: 'refresh_token'
+				}).then(get_streams);
+
+		},
+		get_streams = function(err, result) {
+			if(err) {
+				console.log('error in getting stream');
+				return next(err);
+			}
+
+			curl.get
+				.to(
+					'www.googleapis.com',
+					443,
+					'/youtube/v3/liveBroadcasts'
+				)
+				.secured()
+				.add_header(
+					'Authorization',
+					'Bearer '+result.access_token
+				)
+				.send({
+					part: 'snippet',
+					broadcastStatus: 'active'
+				})
+				.then(bind_youtube_data);
+		},
+		bind_youtube_data = function( err, result) {
+			data.youtube = result;
+			send_response();
+		},
+		send_response = function (err, result) {
+		    if (err) {
+		        logger.log('warn', 'error getting youtubers');
+		        return next(err);
+		    }
+
+		    delete data.featured_games_tags;
+		    delete data.games_tags;
+
+		    util.set_cache(cacheKey+'.'+twitch+'.'+youtube, data, 30);
+		    res.send(data);
+		};
+
+	start();
+}
+
 exports.get_streamers = function (req, res, next) {
 	var data = {},
 		user,
@@ -140,7 +251,7 @@ exports.get_streamers = function (req, res, next) {
 		},
 		format_buffer = function (err, result) {
 			if(!cache) {
-				util.set_cache('streamers', JSON.parse(JSON.stringify(result)));
+				util.set_cache('streamers', JSON.parse(JSON.stringify(result)), 30);
 			}
 
 			var request = [];

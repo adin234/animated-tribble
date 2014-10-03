@@ -323,12 +323,14 @@ exports.get_games_data = function(req, res, next) {
 		limit,
 		page,
 		cacheKey = 'games.page',
+		cons,
 		start = function() {
 			limit 	= parseInt(req.query.limit) || 25;
 			page 	= req.query.page || 1;
-			var cache = util.get_cache(cacheKey+'.'+page);
+			cons 	= req.query.console || '';
+			var cache = util.get_cache(cacheKey+'.'+page+cons);
 
-            if(cache && typeof req.query.filter == 'undefined' && typeof req.query.console == 'undefined') {
+            if(cache && typeof req.query.filter == 'undefined') {
                 console.log('From Cache');
                 return res.send(cache);
             }
@@ -447,7 +449,7 @@ exports.get_games_data = function(req, res, next) {
 		    delete data.featured_games_tags;
 		    delete data.games_tags;
 
-		    util.set_cache(cacheKey+'.'+page, result);
+		    util.set_cache(cacheKey+'.'+page+cons, result);
 
 		    res.send(result);
 		};
