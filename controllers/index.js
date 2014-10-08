@@ -285,7 +285,7 @@ exports.get_index = function (req, res, next) {
 			data.featured_users = result.map(function(item, i) {
 				return item.user_id;
 			}).join(',');
-			
+
 			curl.get
 				.to(
 					config.community.url,
