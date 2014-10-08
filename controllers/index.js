@@ -54,7 +54,8 @@ exports.get_index = function (req, res, next) {
 			mysql.open(config.mysql)
 				.query(
 					"SELECT xf_thread.*, xf_post.message, xf_attachment.*, \
-						xf_attachment_data.*, xf_post_field_value.field_value as header_location, \
+						xf_attachment_data.*, header.field_value as header_location, \
+						youtube.field_value as youtube_link, \
 						IF(EWRporta_promotes.promote_date IS NULL, xf_thread.post_date, \
 							EWRporta_promotes.promote_date) AS promote_date \
 					FROM xf_thread \
@@ -63,8 +64,10 @@ exports.get_index = function (req, res, next) {
 							AND xf_attachment.content_type = 'post') \
 						INNER JOIN xf_attachment_data ON (xf_attachment_data.data_id = xf_attachment.data_id \
 							AND xf_attachment_data.filename = ? AND xf_attachment_data.thumbnail_width > 0) \
-						LEFT JOIN xf_post_field_value ON (xf_post_field_value.post_id = xf_post.post_id AND \
-							xf_post_field_value.field_id = 'headerLocation') \
+						LEFT JOIN xf_post_field_value header ON (header.post_id = xf_post.post_id AND \
+							header.field_id = 'headerLocation') \
+						LEFT JOIN xf_post_field_value youtube ON (youtube.post_id = xf_post.post_id AND \
+							youtube.field_id = 'youtube_link') \
 						LEFT JOIN EWRporta_promotes ON (EWRporta_promotes.thread_id = xf_thread.thread_id) \
 					WHERE (xf_thread.node_id IN ("+data.forum+") OR EWRporta_promotes.promote_date < ?) \
 						AND xf_thread.discussion_state = 'visible' \
@@ -77,7 +80,7 @@ exports.get_index = function (req, res, next) {
 		},
 		get_featured_games = function (err, result) {
 			if(err) {
-				next.err;
+				return next(err);
 			}
 
 			data.slider = result;
