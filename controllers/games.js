@@ -83,6 +83,7 @@ exports.get_games = function (req, res, next) {
 						id		: values.game_id[i],
 						name	: values.game_name[i],
 						image	: values.game_image[i],
+						chinese : value.game_chi[i]
 					});
 				}
 			}
