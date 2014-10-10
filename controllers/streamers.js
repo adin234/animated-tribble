@@ -250,6 +250,10 @@ exports.get_streamers = function (req, res, next) {
 				).end();
 		},
 		format_buffer = function (err, result) {
+			if(err) {
+				return next(err);
+			}
+		
 			if(!cache) {
 				util.set_cache('streamers', JSON.parse(JSON.stringify(result)), 30);
 			}
