@@ -65,7 +65,7 @@ exports.get_suggestions = function(req, res, next) {
             res.send(result);
         }
 
-    start()''
+    start();
 };
 
 exports.update_videos = function(req, res, next) {
