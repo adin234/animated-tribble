@@ -50,6 +50,24 @@ exports.get_user_credentials = function(channel, next) {
         .end();
 };
 
+exports.get_suggestions = function(req, res, next) {
+    var data = {},
+        start = function() {
+            //expects req.query.id
+            send_response(null, 'adin');
+        },
+        send_response = function(err, result) {
+            if(err) {
+                return next(err);
+            }
+
+            //return array of suggested videos
+            res.send(result);
+        }
+
+    start()''
+};
+
 exports.update_videos = function(req, res, next) {
     var data = {},
         start = function() {
@@ -281,7 +299,8 @@ exports.get_youtubers = function (req, res, next) {
             mysql.open(config.mysql)
                 .query(
                     "SELECT * FROM xf_user WHERE user_id IN ("
-                    +" SELECT user_id FROM xf_user_field_value WHERE field_id = 'youtube_id' AND field_value IS NOT NULL and field_value <> '')"
+                    +" SELECT user_id FROM xf_user_field_value WHERE field_id = 'youtube_id' \
+                    AND field_value IS NOT NULL and field_value <> '')"
                     +" LIMIT "+limit
                     +" OFFSET "+(page - 1)*limit,
                     [req.params.id],
