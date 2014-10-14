@@ -10,7 +10,6 @@ exports.get_youtube_streamers = function (req, res, next) {
 		user,
 		index = 0,
 		start = function () {
-
 			mysql.open(config.mysql)
 				.query('SELECT user.*, refresh.*, youtube.field_value youtube \
 					FROM xf_user_field_value refresh INNER JOIN \
@@ -29,7 +28,7 @@ exports.get_youtube_streamers = function (req, res, next) {
 				return next(err);
 			}
 			result.forEach(function(user) {
-				if(user.field_value.trim().length) {
+				if(user.field_value.trim().length && (req.query.user ? user.user_id == req.query.user : 1)) {
 					user.field_id = new Buffer( user.field_id, 'binary' )
 						.toString();
 					data[user.youtube] = { user: user }
@@ -236,15 +235,21 @@ exports.get_streamers = function (req, res, next) {
 			logger.log('info', 'Getting Streamers');
 			cache = JSON.parse(JSON.stringify(util.get_cache('streamers')));
 
-			if(!(typeof cache === 'undefined') && cache) {
+			if(!(typeof cache === 'undefined') && cache && !req.query.user) {
 				return format_buffer(null, cache);
+			}
+
+			where = '';
+
+			if(req.query.user) {
+				where = ' AND xf_user.user_id = '+req.query.user;
 			}
 
 			mysql.open(config.mysql)
 				.query(
 					'SELECT * FROM xf_user_field_value INNER JOIN \
 					xf_user ON xf_user.user_id = xf_user_field_value.user_id \
-					WHERE field_id = ? AND field_value != ""',
+					WHERE field_id = ? AND field_value != ""'+where,
 					['twitchStreams'],
 					format_buffer
 				).end();
