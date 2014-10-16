@@ -473,7 +473,7 @@ exports.get_games_data = function(req, res, next) {
 		                return e.trim();
 		            });
 
-		        if(~(result[i].platforms.indexOf(req.query.console)) || req.query.console == undefined) {
+		        if(~(result[i].platforms.indexOf(req.query.console)) || req.query.console == undefined || req.query.console == 'vlogs') {
 		            data.games.push(result[i]);
 		            data.games_ids.push(result[i].id);
 		            if(result[i].active) {
