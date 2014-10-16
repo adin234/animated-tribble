@@ -108,6 +108,41 @@ exports.get_games = function (req, res, next) {
 	start();
 };
 
+exports.get_game_data = function(req, res, next) {
+	var data = {},
+		start = function() {
+			req.query.limit = req.query.limit || 1500;
+			console.log(req.params);
+			exports.get_game_videos(req, {
+				status: function(){},
+				send: function(result) {
+					data.videos = result;
+					exports.get_game_playlists(req, {
+						status: function(){},
+						send: function(result) {
+							data.playlists = result;
+							if(result.length) {
+								data.config = {
+									playlist: result[0].id
+								}
+							}
+							data.categories = [];
+							send_response(null, data);
+						}
+					}, next)
+				}
+			}, next)
+		},
+		send_response = function(err, result) {
+			if(err) {
+				return next(err);
+			}
+
+			res.send(result);
+		};
+	start();
+};
+
 exports.get_game_videos = function (req, res, next) {
 	var data = {},
 		user,
@@ -285,24 +320,60 @@ exports.get_game_playlists = function (req, res, next) {
 				return send_response(null, result);
 			}
 
-			var tags = result[0].tags.split(',').map(function(item) {
+			data.tags = result[0].tags.split(',').map(function(item) {
 				return item.trim();
 			});
 
-			get_playlists(null, tags);
+			get_games_list()
 		},
-		get_playlists = function(err, result) {
-			if(result.length > 0) {
-				return mongo.collection('playlists')
-					.find({
-						'snippet.tags' : {
-							$in : result
-						}
-					})
-					.toArray(send_response);
+		get_games_list = function (err, result) {
+			return mysql.open(config.mysql)
+				.query(
+					'select * from xf_option \
+					where option_id = \'anytv_categories_categories\'',
+					[],
+					format_buffer
+				).end();
+		}
+		format_buffer = function (err, result) {
+			if (err) {
+				logger.log('warn', 'Error getting the twitch');
+				return next(err);
 			}
 
-			send_response(null, []);
+			if(result.length === 0) {
+				return res.status(500).send({message: 'No streamers found'});
+			}
+
+			result[0].option_id = new Buffer( result[0].option_id, 'binary' ).toString();
+			result[0].option_value = us.unserialize(new Buffer( result[0].option_value, 'binary' )
+					.toString());
+			result[0].default_value = new Buffer( result[0].default_value, 'binary' ).toString();
+			result[0].addon_id = new Buffer( result[0].addon_id, 'binary' ).toString();
+
+			var values = result[0].option_value;
+			var finalvalue = [];
+			for(var i=0; i<values.game_id.length; i++) {
+				if(values.game_id[i]==req.params.gameid) {
+					data.game_name = values.game_name[i];
+				}
+			}
+
+			get_playlists(null, data);
+		},
+		get_playlists = function(err, result) {
+			return mongo.collection('playlists')
+				.find({
+					$or: [
+						{ 'snippet.tags' : {
+							$in : result.tags
+						}},
+						{ 'snippet.title' : {
+							$regex: data.game_name
+						}}
+					]
+				})
+				.toArray(send_response);
 		}
 		send_response = function (err, result) {
 			if (err) {
