@@ -95,6 +95,12 @@ exports.update_videos = function(req, res, next) {
                 return mongo.toId(e.trim());
             });
 
+            if(req.body.cleartags) {
+                return mongo.collection('videos')
+                    .find()
+                    .toArray(set_tags);
+            }
+
             var x = mongo.collection('videos')
                 .find({
                     '_id': {
