@@ -156,7 +156,7 @@ exports.get_data = function (req, res, next) {
             page    = req.query.page || 1;
             cons = req.query.console || '';
             game = req.query.game || '';
-            console.log(cons);
+
             cacheKey = cacheKey+page+cons+game;
 
             var cache = util.get_cache(cacheKey);
