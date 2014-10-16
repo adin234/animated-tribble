@@ -50,11 +50,28 @@ exports.get_user_credentials = function(channel, next) {
         .end();
 };
 
+
+// Create text index first to be able to use this feature.
+// Use updated mongo server
+// db.videos.ensureIndex({engtitle: "text"});
 exports.get_suggestions = function(req, res, next) {
     var data = {},
         start = function() {
-            //expects req.query.id
-            send_response(null, 'adin');
+            if (!req.query.search || req.query.search.trim() === '') {
+                return send_response('Invalid search query!');
+            }
+            mongo.collection('videos').find(
+                {
+                    "$text" : {
+                        "$search" : req.query.search
+                    }
+                },
+                {
+                    score : {
+                        "$meta" : "textScore"
+                    }
+                }
+            ).toArray(send_response);
         },
         send_response = function(err, result) {
             if(err) {
@@ -64,7 +81,7 @@ exports.get_suggestions = function(req, res, next) {
             //return array of suggested videos
             res.send(result);
         }
-
+    
     start();
 };
 

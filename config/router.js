@@ -44,6 +44,7 @@ module.exports	= function (router, logger) {
 	router.get('/news', news.get_news);
 	router.get('/shows', shows.get_shows);
 	router.get('/user/personal/:id', user.get_youtuber_profile);
+	router.get('/vid_suggestions', youtubers.get_suggestions);
 
 	router.post('/batch/update', youtubers.update_videos);
 	router.all('*', function (req, res) {
