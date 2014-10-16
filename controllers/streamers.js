@@ -84,7 +84,6 @@ exports.get_youtube_streamers = function (req, res, next) {
 		},
 		format_response = function (err, result) {
 			response = {streamers: []};
-			console.log('result', result);
 			for(i in result) {
 				item = result[i];
 				console.log('streamas', item.streams)
@@ -98,7 +97,6 @@ exports.get_youtube_streamers = function (req, res, next) {
 						response.streamers.push(topush);
 					});
 				}
-				console.log(i);
 			};
 
 			send_response(err, response);

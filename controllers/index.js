@@ -195,7 +195,7 @@ exports.get_index = function (req, res, next) {
 						where,
 						{
 							'snippet.meta.tags' : {
-								$in : data.featured_games_tags
+								$in : ['anytv_console_'+req.query.console]
 							}
 						}
 					]
@@ -238,7 +238,7 @@ exports.get_index = function (req, res, next) {
 						where,
 						{
 							'snippet.meta.tags' : {
-								$in : data.games_tags
+								$in : ['anytv_console_'+req.query.console]
 							}
 						}
 					]

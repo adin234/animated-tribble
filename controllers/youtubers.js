@@ -7,6 +7,7 @@ var config          = require(__dirname + '/../config/config'),
     mongo           = require(__dirname + '/../lib/mongoskin');
 
 exports.get_access = function(user, next) {
+    console.log(user);
     curl.post
         .to(
             'accounts.google.com',
@@ -37,7 +38,7 @@ exports.update_video = function(params, auth, next) {
 };
 
 exports.get_user_credentials = function(channel, next) {
-     mysql.open(config.mysql)
+     mysqlG
         .query('SELECT token.user_id, token.field_value as refresh_token, channel.field_value as channel \
             FROM xf_user_field_value token \
             INNER JOIN xf_user_field_value channel \
@@ -46,15 +47,33 @@ exports.get_user_credentials = function(channel, next) {
             AND channel.field_id = "youtube_id" \
             AND channel.field_value = ?',
             [channel],
-            next)
-        .end();
+            next);
 };
 
+
+// Create text index first to be able to use this feature.
+// Use updated mongo server
+// db.videos.ensureIndex({engtitle: "text"});
 exports.get_suggestions = function(req, res, next) {
     var data = {},
         start = function() {
-            //expects req.query.id
-            send_response(null, 'adin');
+            if (!req.query.search || req.query.search.trim() === '') {
+                return send_response('Invalid search query!');
+            }
+            mongo.collection('videos').find(
+                {
+                    "$text" : {
+                        "$search" : req.query.search
+                    }
+                },
+                {
+                    score : {
+                        "$meta" : "textScore"
+                    }
+                }
+            )
+            .limit(10)
+            .toArray(send_response);
         },
         send_response = function(err, result) {
             if(err) {
@@ -64,16 +83,23 @@ exports.get_suggestions = function(req, res, next) {
             //return array of suggested videos
             res.send(result);
         }
-
+    
     start();
 };
 
 exports.update_videos = function(req, res, next) {
     var data = {},
         start = function() {
+            mysqlG = mysql.open(config.mysql);
             var videos = req.body.vids.split(',').map(function(e) {
                 return mongo.toId(e.trim());
             });
+
+            if(req.body.cleartags) {
+                return mongo.collection('videos')
+                    .find()
+                    .toArray(set_tags);
+            }
 
             var x = mongo.collection('videos')
                 .find({
@@ -96,7 +122,16 @@ exports.update_videos = function(req, res, next) {
                             return next(err);
                         }
 
-                        exports.get_access(result[0], function(err, result) {
+                        user = result[0];
+                        if(result.length > 1) {
+                            result.forEach(function(item) {
+                                if(item.refresh_token.trim().length) {
+                                    user = item;
+                                }
+                            });
+                        }
+
+                        exports.get_access(user, function(err, result) {
                             if(err) {
                                 console.log('err '+err);
                                 return next(err);
@@ -131,6 +166,8 @@ exports.update_videos = function(req, res, next) {
                     }
                 )
             });
+
+            mysqlG.end();
         },
         send_response = function(err, result) {
             if(err) {
