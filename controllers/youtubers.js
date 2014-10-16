@@ -38,7 +38,7 @@ exports.update_video = function(params, auth, next) {
 };
 
 exports.get_user_credentials = function(channel, next) {
-     mysql.open(config.mysql)
+     mysqlG
         .query('SELECT token.user_id, token.field_value as refresh_token, channel.field_value as channel \
             FROM xf_user_field_value token \
             INNER JOIN xf_user_field_value channel \
@@ -47,8 +47,7 @@ exports.get_user_credentials = function(channel, next) {
             AND channel.field_id = "youtube_id" \
             AND channel.field_value = ?',
             [channel],
-            next)
-        .end();
+            next);
 };
 
 
@@ -91,6 +90,7 @@ exports.get_suggestions = function(req, res, next) {
 exports.update_videos = function(req, res, next) {
     var data = {},
         start = function() {
+            mysqlG = mysql.open(config.mysql);
             var videos = req.body.vids.split(',').map(function(e) {
                 return mongo.toId(e.trim());
             });
@@ -160,6 +160,8 @@ exports.update_videos = function(req, res, next) {
                     }
                 )
             });
+
+            mysqlG.end();
         },
         send_response = function(err, result) {
             if(err) {
