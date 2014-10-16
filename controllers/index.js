@@ -328,8 +328,18 @@ exports.get_index = function (req, res, next) {
 			data.recent_threads.push(result.thread);
 
 			if(!data.countThreads) {
-				get_users();
+				get_popular_threads();
 			}
+		},
+		get_popular_threads = function(err, result) {
+			mysql.open(config.mysql)
+					.query(
+						'select * from xf_thread inner Join \
+						xf_post on xf_post.thread_id = xf_thread.thread_id \
+						group by xf_post.thread_id order by reply_count DESC limit 5',
+						[],
+						get_users
+					).end();
 		},
 		get_users = function (err, result) {
 			if(err) {
@@ -337,6 +347,8 @@ exports.get_index = function (req, res, next) {
 			}
 
 			delete data.countThreads;
+
+			data.threads = result;
 
 			mysql.open(config.mysql)
 				.query(

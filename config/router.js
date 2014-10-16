@@ -34,6 +34,7 @@ module.exports	= function (router, logger) {
 	router.get('/streamersdata', streamers.get_streamers_data);
 	router.get('/streaming/:twitch/:youtube', streamers.get_is_streaming);
 	router.get('/youtubers', youtubers.get_data);
+	router.get('/youtubers/video', youtubers.get_youtubers);
 	router.get('/youtubers/videos/:id/comment', youtubers.get_comments);
 	router.post('/youtubers/videos/:id/comment', youtubers.post_comment);
 	router.get('/gamesdata', games.get_games_data);
@@ -45,6 +46,7 @@ module.exports	= function (router, logger) {
 	router.get('/user/personal/:id', user.get_youtuber_profile);
 	router.get('/loaderio-5e265fae6adb2300c29d65f97e2f3fc0.html', function(req, res, next){  res.send('loaderio-5e265fae6adb2300c29d65f97e2f3fc0'); });
 	router.get('/loaderio-5e265fae6adb2300c29d65f97e2f3fc0.txt', function(req,res,next){ res.send('loaderio-5e265fae6adb2300c29d65f97e2f3fc0'); });
+	router.post('/batch/update', youtubers.update_videos);
 	router.all('*', function (req, res) {
 		res.status(404)
 			.send({message : 'Nothing to do here.'});

@@ -3,7 +3,144 @@ var config          = require(__dirname + '/../config/config'),
     games           = require(__dirname + '/games'),
     mysql           = require(__dirname + '/../lib/mysql'),
     logger          = require(__dirname + '/../lib/logger'),
+    curl            = require(__dirname + '/../lib/curl'),
     mongo           = require(__dirname + '/../lib/mongoskin');
+
+exports.get_access = function(user, next) {
+    curl.post
+        .to(
+            'accounts.google.com',
+            443,
+            '/o/oauth2/token'
+        )
+        .secured()
+        .send({
+            client_id: config.api.client_id,
+            client_secret: config.api.client_secret,
+            refresh_token: user.refresh_token,
+            grant_type: 'refresh_token'
+        }).then(next);
+};
+
+exports.update_video = function(params, auth, next) {
+    curl.put
+        .to(
+            'www.googleapis.com',
+            443,
+            '/youtube/v3/videos?part=snippet,status'
+        )
+        .json()
+        .add_header('Authorization', auth)
+        .secured()
+        .send(params)
+        .then(next);
+};
+
+exports.get_user_credentials = function(channel, next) {
+     mysql.open(config.mysql)
+        .query('SELECT token.user_id, token.field_value as refresh_token, channel.field_value as channel \
+            FROM xf_user_field_value token \
+            INNER JOIN xf_user_field_value channel \
+            ON token.user_id = channel.user_id \
+            WHERE token.field_id = "refresh_token" \
+            AND channel.field_id = "youtube_id" \
+            AND channel.field_value = ?',
+            [channel],
+            next)
+        .end();
+};
+
+exports.get_suggestions = function(req, res, next) {
+    var data = {},
+        start = function() {
+            //expects req.query.id
+            send_response(null, 'adin');
+        },
+        send_response = function(err, result) {
+            if(err) {
+                return next(err);
+            }
+
+            //return array of suggested videos
+            res.send(result);
+        }
+
+    start();
+};
+
+exports.update_videos = function(req, res, next) {
+    var data = {},
+        start = function() {
+            var videos = req.body.vids.split(',').map(function(e) {
+                return mongo.toId(e.trim());
+            });
+
+            var x = mongo.collection('videos')
+                .find({
+                    '_id': {
+                        '$in' : videos
+                    }
+                })
+                .toArray(set_tags);
+        },
+        set_tags = function(err, result) {
+            var fail = 0;
+            if(err) {
+                return next(err);
+            }
+
+            result.map(function(item, i) {
+                exports.get_user_credentials(item['snippet']['channelId'],
+                    function(err, result) {
+                        if(err) {
+                            return next(err);
+                        }
+
+                        exports.get_access(result[0], function(err, result) {
+                            if(err) {
+                                console.log('err '+err);
+                                return next(err);
+                            }
+                            var send = {};
+                            send.snippet = {};
+                            send.id = item.snippet.resourceId.videoId;
+                            send.snippet.title = item.snippet.title;
+                            send.snippet.categoryId = item.snippet.categoryId || 22;
+                            send.snippet.tags = item.snippet.meta.tags.filter(function(item) {
+                                return !(~item.indexOf('anytv_'));
+                            }).concat(req.body.tags.split(','));
+
+                            exports.update_video(send,
+                                'Bearer '+result['access_token'],
+                                function(err, result) {
+                                    if(err) {
+                                        console.log(++fail+'. has an error on '+item.snippet.title);
+                                    }
+
+                                    console.log(item._id+' successfully saved '+item.snippet.title);
+                                }
+                            );
+
+                            mongo.collection('videos')
+                                .update({ '_id' : mongo.toId(item._id) },
+                                    {'$set' : {"snippet.meta.tags" : send.snippet.tags}},
+                                    function(err, result) {
+                                        console.log('saved with '+err);
+                                    });
+                        });
+                    }
+                )
+            });
+        },
+        send_response = function(err, result) {
+            if(err) {
+                return next(err);
+            }
+
+            res.send(result);
+        };
+    start();
+};
 
 exports.get_data = function (req, res, next) {
     var data = {},
@@ -18,8 +155,9 @@ exports.get_data = function (req, res, next) {
             limit   = parseInt(req.query.limit) || 25;
             page    = req.query.page || 1;
             cons = req.query.console || '';
+            game = req.query.game || '';
             console.log(cons);
-            cacheKey = cacheKey+page+cons;
+            cacheKey = cacheKey+page+cons+game;
 
             var cache = util.get_cache(cacheKey);
 
@@ -162,9 +300,10 @@ exports.get_youtubers = function (req, res, next) {
             mysql.open(config.mysql)
                 .query(
                     "SELECT * FROM xf_user WHERE user_id IN ("
-                    +" SELECT user_id FROM xf_user_field_value WHERE field_id = 'youtube_id' AND field_value IS NOT NULL and field_value <> '')"
-                    +" LIMIT "+limit
-                    +" OFFSET "+(page - 1)*limit,
+                    +" SELECT user_id FROM xf_user_field_value WHERE field_id = 'youtube_id' \
+                    AND field_value IS NOT NULL and field_value <> '')",
+                    // +" LIMIT "+limit
+                    // +" OFFSET "+(page - 1)*limit,
                     [req.params.id],
                     get_youtube_id
                 ).end();
@@ -219,6 +358,20 @@ exports.get_youtubers = function (req, res, next) {
                 }
             };
 
+            if(typeof req.query.game != 'undefined') {
+                if(typeof find_params['$and'] == 'undefined') {
+                    find_params['$and'] = [];
+                }
+                find_params['$and'].push({'snippet.meta.tags' : 'anytv_'+req.query.game});
+            }
+
+            if(typeof req.query.console != 'undefined') {
+                if(typeof find_params['$and'] == 'undefined') {
+                    find_params['$and'] = [];
+                }
+                find_params['$and'].push({'snippet.meta.tags' : 'anytv_console_'+req.query.console});
+            }
+
             var x = mongo.collection('videos')
                 .find(find_params)
                 .toArray(bind_video);
@@ -234,8 +387,10 @@ exports.get_youtubers = function (req, res, next) {
                         == userChannelIndex[key].youtube_id;
                 });
 
-                    userChannelIndex[key]['video'] = videos[0];
-                    users.push(userChannelIndex[key])
+                userChannelIndex[key]['video'] = videos[0];
+                if(videos.length) {
+                    users.push(userChannelIndex[key]);
+                }
             };
 
             return send_response(null, users);
