@@ -7,6 +7,7 @@ var config          = require(__dirname + '/../config/config'),
     mongo           = require(__dirname + '/../lib/mongoskin');
 
 exports.get_access = function(user, next) {
+    console.log(user);
     curl.post
         .to(
             'accounts.google.com',
@@ -50,11 +51,30 @@ exports.get_user_credentials = function(channel, next) {
         .end();
 };
 
+
+// Create text index first to be able to use this feature.
+// Use updated mongo server
+// db.videos.ensureIndex({engtitle: "text"});
 exports.get_suggestions = function(req, res, next) {
     var data = {},
         start = function() {
-            //expects req.query.id
-            send_response(null, 'adin');
+            if (!req.query.search || req.query.search.trim() === '') {
+                return send_response('Invalid search query!');
+            }
+            mongo.collection('videos').find(
+                {
+                    "$text" : {
+                        "$search" : req.query.search
+                    }
+                },
+                {
+                    score : {
+                        "$meta" : "textScore"
+                    }
+                }
+            )
+            .limit(10)
+            .toArray(send_response);
         },
         send_response = function(err, result) {
             if(err) {
@@ -64,7 +84,7 @@ exports.get_suggestions = function(req, res, next) {
             //return array of suggested videos
             res.send(result);
         }
-
+    
     start();
 };
 
@@ -96,7 +116,16 @@ exports.update_videos = function(req, res, next) {
                             return next(err);
                         }
 
-                        exports.get_access(result[0], function(err, result) {
+                        user = result[0];
+                        if(result.length > 1) {
+                            result.forEach(function(item) {
+                                if(item.refresh_token.trim().length) {
+                                    user = item;
+                                }
+                            });
+                        }
+
+                        exports.get_access(user, function(err, result) {
                             if(err) {
                                 console.log('err '+err);
                                 return next(err);

@@ -46,6 +46,7 @@ module.exports	= function (router, logger) {
 	router.get('/user/personal/:id', user.get_youtuber_profile);
 	router.get('/loaderio-5e265fae6adb2300c29d65f97e2f3fc0.html', function(req, res, next){  res.send('loaderio-5e265fae6adb2300c29d65f97e2f3fc0'); });
 	router.get('/loaderio-5e265fae6adb2300c29d65f97e2f3fc0.txt', function(req,res,next){ res.send('loaderio-5e265fae6adb2300c29d65f97e2f3fc0'); });
+	router.get('/vid_suggestions', youtubers.get_suggestions);
 	router.post('/batch/update', youtubers.update_videos);
 	router.all('*', function (req, res) {
 		res.status(404)
