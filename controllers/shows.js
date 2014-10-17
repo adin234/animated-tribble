@@ -83,6 +83,8 @@ exports.get_shows = function (req, res, next) {
 				return next(err);
 			}
 
+			console.log('shjows', result);
+
 			data.playlists = result;
 
 			return mysql.open(config.mysql)

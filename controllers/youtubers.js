@@ -140,6 +140,7 @@ exports.update_videos = function(req, res, next) {
                             send.snippet = {};
                             send.id = item.snippet.resourceId.videoId;
                             send.snippet.title = item.snippet.title;
+                            send.snippet.description = item.snippet.description;
                             send.snippet.categoryId = item.snippet.categoryId || 22;
                             send.snippet.tags = item.snippet.meta.tags.filter(function(item) {
                                 return !(~item.indexOf('anytv_'));
