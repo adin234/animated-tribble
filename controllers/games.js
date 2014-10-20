@@ -127,7 +127,17 @@ exports.get_game_data = function(req, res, next) {
 								}
 							}
 							data.categories = [];
-							send_response(null, data);
+							exports.get_games(req, {
+								status: function() {},
+								send: function(result) {
+									var name = result.filter(function(game) {
+										return game.id == req.params.gameid;
+									});
+
+									data.game_name = name[0];
+									send_response(null, data);
+								}
+							}, next)
 						}
 					}, next)
 				}
