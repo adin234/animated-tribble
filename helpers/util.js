@@ -122,3 +122,8 @@ exports.get_cache = function(key, callback) {
 
     return cache[key];
 }
+
+exports.flush_cache = function(key, callback) {
+    return myCache.flushAll();
+}
+

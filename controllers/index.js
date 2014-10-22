@@ -422,3 +422,12 @@ exports.get_scrape = function (req, res, next) {
 		};
 	start();
 };
+
+exports.flush_cache = function(req, res, next) {
+	var message = 'Nope';
+	if(req.query.flush == '1') {
+		util.flush_cache();
+		message = 'Flushed';
+	}
+	res.send({'message': message});
+}

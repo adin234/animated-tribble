@@ -83,7 +83,7 @@ exports.get_suggestions = function(req, res, next) {
             //return array of suggested videos
             res.send(result);
         }
-    
+
     start();
 };
 
@@ -263,7 +263,9 @@ exports.get_data = function (req, res, next) {
                     .split(',').map(function(e) {
                         return e.trim();
                     });
-
+                if(result[i].id == 'fatal_frame') {
+                    console.log(result[i].id);
+                }
                 if(~(result[i].platforms.indexOf(req.query.console)) || req.query.console == undefined) {
                     data.games.push(result[i]);
                     data.games_ids.push(result[i].id);
@@ -294,6 +296,8 @@ exports.get_data = function (req, res, next) {
                             if(~data.featured_games_ids.indexOf(item.id)) {
                                 data.featured_games.push(item);
                             }
+                        } else {
+                            console.log('not on the database', item);
                         }
                     });
 

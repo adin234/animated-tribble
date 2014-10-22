@@ -464,6 +464,7 @@ exports.get_games_data = function(req, res, next) {
 		    ).end();
 		},
 		filter_tags = function(err, result) {
+
 		    if(err) {
 		        return next(err);
 		    }
@@ -472,8 +473,8 @@ exports.get_games_data = function(req, res, next) {
 		    data.games_ids = [];
 		    data.featured_games = [];
 		    data.featured_games_ids = [];
-
 		    for(var i=0; i < result.length; i++) {
+
 		        result[i].platforms = result[i].platforms && result[i].platforms
 		            .split(',').map(function(e) {
 		                return e.trim();
@@ -507,12 +508,15 @@ exports.get_games_data = function(req, res, next) {
 
 		            data.featured_games = [];
 		            data.games = [];
+		            console.log(data.games_ids);
 		            item.forEach(function(item, i) {
 		                if(~data.games_ids.indexOf(item.id)) {
 		                    data.games.push(item);
 		                    if(~data.featured_games_ids.indexOf(item.id)) {
 		                        data.featured_games.push(item);
 		                    }
+		                } else {
+		                	console.log('check this game ids', item);
 		                }
 		            });
 
