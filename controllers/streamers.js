@@ -5,6 +5,26 @@ var config 			= require(__dirname + '/../config/config'),
     curl			= require(__dirname + '/../lib/curl'),
     logger         	= require(__dirname + '/../lib/logger');
 
+exports.get_views = function (req, res, next) {
+	var data = {},
+		start = function () {
+			var twitch = req.params.twitch || false;
+			curl.get
+				.to('api.twitch.tv', 443, '/kraken/streams/'+twitch)
+				.secured()
+				.send()
+				.then(send_response);
+		},
+		send_response = function (err, result) {
+			if(err) {
+				return next(err);
+			}
+
+			res.send(result);
+		};
+	start();
+};
+
 exports.get_youtube_streamers = function (req, res, next) {
 	var data = {},
 		user,

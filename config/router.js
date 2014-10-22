@@ -25,7 +25,7 @@ module.exports	= function (router, logger) {
 	});
 
 	router.post('/login', login.login);
-
+	router.get('/get_views/:twitch', streamers.get_views);
 	router.get('/index', index.get_index);
 	router.get('/flush', index.flush_cache);
 	router.get('/scrape/:twitch', index.get_scrape);
