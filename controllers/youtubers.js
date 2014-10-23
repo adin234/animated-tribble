@@ -519,3 +519,42 @@ exports.get_comments = function (req, res, next) {
         };
     start();
 };
+
+exports.search = function (req, res, next) {
+    var data = {},
+        cacheKey = 'youtubers.search.'+req.params.string,
+        start = function (err, next) {
+            var cache = util.get_cache(cacheKey);
+
+            if(cache && typeof req.query.filter == 'undefined'
+              && typeof req.query.console == 'undefined') {
+                console.log('From Cache');
+                return res.send(cache);
+            }
+
+            mysql.open(config.mysql)
+                .query(
+                    "SELECT username, user_id FROM xf_user WHERE user_id \
+                        IN ( SELECT user_id \
+                             FROM xf_user_field_value \
+                             WHERE field_id = 'youtube_id' \
+                             AND field_value \
+                             IS NOT NULL and field_value <> '' \
+                       ) AND username LIKE ? \
+                    LIMIT 5",
+                    ['%%'+req.params.string+'%%'],
+                    send_response
+                ).end();
+
+        },
+        send_response = function (err, result) {
+            if(err) {
+                return next(err);
+            }
+
+            util.set_cache(cacheKey, result);
+            res.send(result);
+        };
+
+    start();
+}
