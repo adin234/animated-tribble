@@ -522,7 +522,7 @@ exports.get_comments = function (req, res, next) {
 
 exports.search = function (req, res, next) {
     var data = {},
-        cacheKey = 'youtubers.search.'+req.params.string,
+        cacheKey = 'youtubers.search.'+req.query.query,
         start = function (err, next) {
             var cache = util.get_cache(cacheKey);
 
@@ -542,18 +542,25 @@ exports.search = function (req, res, next) {
                              IS NOT NULL and field_value <> '' \
                        ) AND username LIKE ? \
                     LIMIT 5",
-                    ['%%'+req.params.string+'%%'],
+                    ['%%'+req.query.query+'%%'],
                     send_response
                 ).end();
-
         },
         send_response = function (err, result) {
             if(err) {
                 return next(err);
             }
+            var suggest = [];
 
-            util.set_cache(cacheKey, result);
-            res.send(result);
+            result.forEach(function(item) {
+                suggest.push({value: item.username, data: item});
+            });
+
+            var data = {query: req.query.query, suggestions: suggest};
+
+            util.set_cache(cacheKey, data);
+
+            res.send(data);
         };
 
     start();
