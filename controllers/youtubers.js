@@ -87,6 +87,19 @@ exports.get_suggestions = function(req, res, next) {
     start();
 };
 
+exports.get_lan_party = function(req, res, next) {
+    var data = {},
+        start = function() {
+            mongo.collection('lan_party')
+                .find({'_id':'details'})
+                .toArray(send_response);
+        },
+        send_response = function(err, result) {
+            res.send(result[0]);
+        };
+    start();
+};
+
 exports.update_videos = function(req, res, next) {
     var data = {},
         start = function() {
