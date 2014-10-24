@@ -9,11 +9,18 @@ exports.get_views = function (req, res, next) {
 	var data = {},
 		start = function () {
 			var twitch = req.params.twitch || false;
-			curl.get
-				.to('api.twitch.tv', 443, '/kraken/streams/'+twitch)
-				.secured()
-				.send()
-				.then(send_response);
+			var type = twitch.substr(0,2);
+			twitch = twitch.substr(2);
+
+			if(type == 'TW') {
+				curl.get
+					.to('api.twitch.tv', 443, '/kraken/streams/'+twitch)
+					.secured()
+					.send()
+					.then(send_response);
+			}
+
+			send_response(null, 'No data');
 		},
 		send_response = function (err, result) {
 			if(err) {

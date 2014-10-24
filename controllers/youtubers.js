@@ -92,10 +92,32 @@ exports.get_lan_party = function(req, res, next) {
         start = function() {
             mongo.collection('lan_party')
                 .find({'_id':'details'})
+                .toArray(get_videos);
+        },
+        get_videos = function(err, result) {
+            data = result[0];
+            mongo.collection('lan_party_videos')
+                .find()
+                .toArray(get_playlists);
+        },
+        get_playlists = function(err, result) {
+            data.videos = result;
+            mongo.collection('lan_party_playlists')
+                .find()
                 .toArray(send_response);
         },
         send_response = function(err, result) {
-            res.send(result[0]);
+            channel = data.lanparty_channel.split('/').filter(function(e) {
+                return e;
+            });
+
+            data.playlists = result;
+            data.categories = [];
+            data.config = {
+                channel:    channel[channel.length-1],
+                playlist:   'UU'+channel[channel.length-1].substr(2)
+            }
+            res.send(data);
         };
     start();
 };
@@ -220,8 +242,10 @@ exports.get_data = function (req, res, next) {
             get_youtubers(null, []);
         },
         get_youtubers = function(err, result) {
+            req.query.orderType = 'asc';
             return exports.get_youtubers(req, {
                 send: function(result) {
+                    delete req.query.orderType;
                     data.youtubers = result;
                     get_popular_youtubers(null, []);
                 }
@@ -229,14 +253,30 @@ exports.get_data = function (req, res, next) {
         },
         get_popular_youtubers = function(err, result) {
             req.query.order = 'popularity';
+            delete req.query.orderType;
 
             return exports.get_youtubers(req, {
                 send: function(result) {
                     data.popular_youtubers = result;
-                    get_featured_games(null, []);
+                    delete req.query.order;
+
+                    //gets new youtubers
+                    exports.get_youtubers(req, {
+                        send: function(result) {
+                            data.new_youtubers = result.filter(function(e) {
+                                date = new Date();
+                                return (e.joinedAt.toYMD())
+                                    .indexOf(date.getFullYear()+'-'+('000'+date.getMonth()).slice(-2)) === 0
+                                    || (e.joinedAt.toYMD())
+                                    .indexOf(date.getFullYear()+'-'+('000'+(date.getMonth()-1)).slice(-2)) === 0;
+                            });
+                            get_featured_games(null, []);
+                        }
+                    })
                 }
             }, next);
         },
+
         get_featured_games = function (err, result) {
             if(err) {
                 next.err;
@@ -381,16 +421,20 @@ exports.get_youtubers = function (req, res, next) {
             });
 
             var order_by = req.query.order || 'userId';
+            var order_type = req.query.orderType || 'desc';
 
             mysql.open(config.mysql)
                 .query(
-                    'SELECT user_id userId, ('
+                    'SELECT x.user_id userId, ('
                     +'select count(*) as popularity '
                     +'from xf_user_follow where follow_user_id = userId'
-                    +') popularity, field_value as youtube_id '
+                    +') popularity, field_value as youtube_id, '
+                    +' x.register_date as joinedAt'
                     +' FROM xf_user_field_value'
-                    +' WHERE field_id = \'youtube_id\' AND user_id IN ('+ids.join(',')+')'
-                    +' ORDER BY '+order_by+' desc',
+                    +' INNER JOIN xf_user x on x.user_id = xf_user_field_value.user_id'
+                    +' WHERE field_id = \'youtube_id\' AND x.user_id IN ('+ids.join(',')+')'
+                    +' ORDER BY '+order_by+' '+order_type
+                    +(req.query.limit ? ' LIMIT '+req.query.limit : ''),
                     [],
                     get_youtubers_video
                 ).end();
@@ -403,6 +447,7 @@ exports.get_youtubers = function (req, res, next) {
             var channels = [];
 
             result.forEach(function(item, i) {
+                item.joinedAt = new Date(item.joinedAt*1000)
                 userChannelIndex[item.youtube_id] = item;
                 channels.push(item.youtube_id);
             });

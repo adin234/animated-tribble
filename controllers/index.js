@@ -211,60 +211,95 @@ exports.get_index = function (req, res, next) {
 				return next(err);
 			}
 
-			data.featured_videos = result;
+			var ids = result.map(function(e) {
+				return '\''+e.snippet.resourceId.videoId+'\'';
+			});
 
-			var today = new Date();
-			var yesterday = new Date();
-			yesterday.setDate(today.getDate()-1);
-			var minus2days = new Date();
-			minus2days.setDate(today.getDate()-2);
-			var minus3days = new Date();
-			minus3days.setDate(today.getDate()-3);
 
-			var where = {
-				'snippet.publishedAt' : {
-					$in: [
-						new RegExp(today.toYMD()),
-						new RegExp(yesterday.toYMD()),
-						new RegExp(minus2days.toYMD()),
-						new RegExp(minus3days.toYMD())
-					]
-				}
-			};
+			mysql.open(config.mysql)
+				.query('select count(comment_id) as comments, video_id from anytv_comments'
+					+' where video_id in('+ids.join(',')+')'
+					+' group by video_id',
+					[],
+					function(e, rlt) {
+						rlt.forEach(function(item, index) {
+							var index = ids.indexOf(item.video_id);
+							result[index].anytv_comment = item.comments
+						});
 
-			if(req.query.console) {
-				where = {
-					$and : [
-						where,
-						{
-							'snippet.meta.tags' : {
-								$in : ['anytv_console_'+req.query.console]
+						data.featured_videos = result;
+
+						var today = new Date();
+						var yesterday = new Date();
+						yesterday.setDate(today.getDate()-1);
+						var minus2days = new Date();
+						minus2days.setDate(today.getDate()-2);
+						var minus3days = new Date();
+						minus3days.setDate(today.getDate()-3);
+
+						var where = {
+							'snippet.publishedAt' : {
+								$in: [
+									new RegExp(today.toYMD()),
+									new RegExp(yesterday.toYMD()),
+									new RegExp(minus2days.toYMD()),
+									new RegExp(minus3days.toYMD())
+								]
+							}
+						};
+
+						if(req.query.console) {
+							where = {
+								$and : [
+									where,
+									{
+										'snippet.meta.tags' : {
+											$in : ['anytv_console_'+req.query.console]
+										}
+									}
+								]
 							}
 						}
-					]
-				}
-			}
 
-			mongo.collection('videos')
-				.find(where)
-				.sort({
-					'snippet.publishedAt' : -1
-				})
-				.toArray(get_most_viewed);
+						mongo.collection('videos')
+							.find(where)
+							.sort({
+								'snippet.publishedAt' : -1
+							})
+							.toArray(get_most_viewed);
+					})
+				.end();
 		},
 		get_most_viewed = function (err, result) {
 			if(err) {
 				return next(err);
 			}
 
-			data.latest_videos = result;
-			mongo.collection('videos')
-				.find()
-				.sort({
-					'snippet.meta.statistics.viewCount': -1
-				})
-				.limit(20)
-				.toArray(get_featured_youtubers);
+			var ids = result.map(function(e) {
+				return e.snippet.resourceId.videoId;
+			});
+
+			mysql.open(config.mysql)
+				.query('select count(comment_id) as comments, video_id from anytv_comments'
+					+' where video_id in(\''+ids.join('\',\'')+'\')'
+					+' group by video_id',
+					[],
+					function(e, rlt) {
+						rlt.forEach(function(item, index) {
+							var index = ids.indexOf(item.video_id);
+							result[index].anytv_comment = item.comments
+						});
+
+						data.latest_videos = result;
+							mongo.collection('videos')
+								.find()
+								.sort({
+									'snippet.meta.statistics.viewCount': -1
+								})
+								.limit(20)
+								.toArray(get_featured_youtubers);
+					})
+				.end();
 		},
 		get_featured_youtubers = function (err, result) {
 			if(err) {
