@@ -11,6 +11,7 @@ exports.get_games = function (req, res, next) {
 	var data = {},
 		user,
 		cacheKey = 'games.data',
+		gameConsole = {},
 		start = function () {
 			logger.log('info', 'Getting Games');
 			var cache = util.get_cache(cacheKey);
@@ -20,16 +21,27 @@ exports.get_games = function (req, res, next) {
                 return res.send(cache);
             }
 
-			if(req.query.featured) {
-				return get_featured();
-			}
+            mysql.open(config.mysql)
+            	.query(
+            		'select * from anytv_games_consoles',
+            		[],
+            		function(err, result) {
+            			result.forEach(function(item) {
+            				gameConsole[item.id] = item.platforms.split(',');
+            			});
 
-			if(req.query.filter) {
-				data = req.query.filter.split(',');
-				req.query.featured = true;
-			}
+            			if(req.query.featured) {
+            				return get_featured();
+            			}
 
-			return get_games();
+            			if(req.query.filter) {
+            				data = req.query.filter.split(',');
+            				req.query.featured = true;
+            			}
+
+            			return get_games();
+            		}
+            	).end();
 		},
 		get_featured = function (err, result) {
 			mysql.open(config.mysql)
@@ -73,6 +85,7 @@ exports.get_games = function (req, res, next) {
 
 			var values = result[0].option_value;
 			var finalvalue = [];
+
 			for(var i=0; i<values.game_id.length; i++) {
 				if(values.game_id[i].length &&
 					(req.query.featured
@@ -81,6 +94,7 @@ exports.get_games = function (req, res, next) {
 				) {
 					finalvalue.push({
 						id		: values.game_id[i],
+						consoles: gameConsole[values.game_id[i]],
 						name	: values.game_name[i],
 						image	: values.game_image[i],
 						chinese : values.game_chi[i]
