@@ -425,14 +425,21 @@ exports.get_games_data = function(req, res, next) {
 				: '';
 
 			var searchRegExp = new RegExp(searchString, 'i');
+			var filter = { '$or' : [
+				{'snippet.title' : searchRegExp},
+				{'snippet.channelTitle' : searchRegExp}
+				]
+			};
+
+			if(req.query.console) {
+				filter['$and'] =  {
+					'snippet.meta.tags' : 'anytv_console_'+req.query.console
+				};
+			}
 
 			return mongo.collection('videos')
 				.find(
-				    { $or : [
-						{'snippet.title' : searchRegExp},
-						{'snippet.channelTitle' : searchRegExp}
-						]
-					}
+					filter
 				)
 				.sort({"snippet.publishedAt" : -1})
 				.skip((page-1)*limit)
@@ -440,6 +447,7 @@ exports.get_games_data = function(req, res, next) {
 				.toArray(bind_videos);
 		},
 		bind_videos = function(err, result) {
+			result = result ? result : [];
 			data.videos = result;
 			get_featured_games(null, []);
 		},
@@ -484,9 +492,10 @@ exports.get_games_data = function(req, res, next) {
 		                return e.trim();
 		            });
 
-		        if(~(result[i].platforms.indexOf(req.query.console)) || req.query.console == undefined || req.query.console == 'vlogs') {
+		        if(~(result[i].platforms.indexOf(req.query.console)) || req.query.console == undefined) {
 		            data.games.push(result[i]);
 		            data.games_ids.push(result[i].id);
+
 		            if(result[i].active) {
 		                data.featured_games.push(result[i]);
 		                data.featured_games_ids.push(result[i].id);
@@ -508,15 +517,12 @@ exports.get_games_data = function(req, res, next) {
 
 		            data.featured_games = [];
 		            data.games = [];
-		            console.log(data.games_ids);
 		            item.forEach(function(item, i) {
 		                if(~data.games_ids.indexOf(item.id)) {
 		                    data.games.push(item);
 		                    if(~data.featured_games_ids.indexOf(item.id)) {
 		                        data.featured_games.push(item);
 		                    }
-		                } else {
-		                	console.log('check this game ids', item);
 		                }
 		            });
 
