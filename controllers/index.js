@@ -222,6 +222,11 @@ exports.get_index = function (req, res, next) {
 					+' group by video_id',
 					[],
 					function(e, rlt) {
+						if(e) {
+							console.log(e);
+							return next(e);
+						}
+
 						rlt.forEach(function(item, index) {
 							var index = ids.indexOf(item.video_id);
 							result[index].anytv_comment = item.comments
