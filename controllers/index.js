@@ -11,6 +11,7 @@ exports.get_index = function (req, res, next) {
 	var data = {},
 		$options,
 		date,
+		ids,
 		cacheKey = 'index.page',
 		start = function () {
 			var cache = util.get_cache(cacheKey);
@@ -211,7 +212,7 @@ exports.get_index = function (req, res, next) {
 				return next(err);
 			}
 
-			var ids = result.map(function(e) {
+			ids = result.map(function(e) {
 				return '\''+e.snippet.resourceId.videoId+'\'';
 			});
 
@@ -284,7 +285,7 @@ exports.get_index = function (req, res, next) {
 				return next(err);
 			}
 
-			var ids = result.map(function(e) {
+			ids = result.map(function(e) {
 				return e.snippet.resourceId.videoId;
 			});
 
