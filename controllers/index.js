@@ -11,7 +11,6 @@ exports.get_index = function (req, res, next) {
 	var data = {},
 		$options,
 		date,
-		ids,
 		cacheKey = 'index.page',
 		start = function () {
 			var cache = util.get_cache(cacheKey);
@@ -212,80 +211,76 @@ exports.get_index = function (req, res, next) {
 				return next(err);
 			}
 
-			ids = result.map(function(e) {
-				return '\''+e.snippet.resourceId.videoId+'\'';
+			var ids = result.map(function(e) {
+				return e.snippet.resourceId.videoId;
 			});
 
-			if(ids.length) {
-				mysql.open(config.mysql)
-					.query('select count(comment_id) as comments, video_id from anytv_comments'
-						+' where video_id in('+ids.join(',')+')'
-						+' group by video_id',
-						[],
-						get_videos)
-					.end();
-			} else {
-				get_videos(null, []);
-			}
-		},
-		get_videos = function(e, rlt) {
-			if(e) {
-				console.log(e);
-				return next(e);
-			}
 
-			rlt.forEach(function(item, index) {
-				var index = ids.indexOf(item.video_id);
-				result[index].anytv_comment = item.comments
-			});
+			mysql.open(config.mysql)
+				.query('select count(comment_id) as comments, video_id from anytv_comments'
+					+' where video_id in(\''+ids.join('\',\'')+'\')'
+					+' group by video_id',
+					[],
+					function(e, rlt) {
+						if(e) {
+							console.log(e);
+							return next(e)
+						}
 
-			data.featured_videos = result;
+						rlt.forEach(function(item, index) {
+							var index = ids.indexOf(item.video_id);
+							result[index].anytv_comment = item.comments
+						});
 
-			var today = new Date();
-			var yesterday = new Date();
-			yesterday.setDate(today.getDate()-1);
-			var minus2days = new Date();
-			minus2days.setDate(today.getDate()-2);
-			var minus3days = new Date();
-			minus3days.setDate(today.getDate()-3);
+						data.featured_videos = result;
 
-			var where = {
-				'snippet.publishedAt' : {
-					$in: [
-						new RegExp(today.toYMD()),
-						new RegExp(yesterday.toYMD()),
-						new RegExp(minus2days.toYMD()),
-						new RegExp(minus3days.toYMD())
-					]
-				}
-			};
+						var today = new Date();
+						var yesterday = new Date();
+						yesterday.setDate(today.getDate()-1);
+						var minus2days = new Date();
+						minus2days.setDate(today.getDate()-2);
+						var minus3days = new Date();
+						minus3days.setDate(today.getDate()-3);
 
-			if(req.query.console) {
-				where = {
-					$and : [
-						where,
-						{
-							'snippet.meta.tags' : {
-								$in : ['anytv_console_'+req.query.console]
+						var where = {
+							'snippet.publishedAt' : {
+								$in: [
+									new RegExp(today.toYMD()),
+									new RegExp(yesterday.toYMD()),
+									new RegExp(minus2days.toYMD()),
+									new RegExp(minus3days.toYMD())
+								]
+							}
+						};
+
+						if(req.query.console) {
+							where = {
+								$and : [
+									where,
+									{
+										'snippet.meta.tags' : {
+											$in : ['anytv_console_'+req.query.console]
+										}
+									}
+								]
 							}
 						}
-					]
-				}
-			}
 
-			mongo.collection('videos')
-				.find(where)
-				.sort({
-					'snippet.publishedAt' : -1
-				})
-				.toArray(get_most_viewed);
+						mongo.collection('videos')
+							.find(where)
+							.sort({
+								'snippet.publishedAt' : -1
+							})
+							.toArray(get_most_viewed);
+					})
+				.end();
 		},
 		get_most_viewed = function (err, result) {
 			if(err) {
 				return next(err);
 			}
 
-			ids = result.map(function(e) {
+			var ids = result.map(function(e) {
 				return e.snippet.resourceId.videoId;
 			});
 
