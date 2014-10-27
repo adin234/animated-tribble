@@ -11,9 +11,8 @@ exports.get_views = function (req, res, next) {
 			var twitch = req.params.twitch || false;
 			var type = twitch.substr(0,2);
 			twitch = twitch.substr(2);
-
 			if(type == 'TW') {
-				curl.get
+				return curl.get
 					.to('api.twitch.tv', 443, '/kraken/streams/'+twitch)
 					.secured()
 					.send()
@@ -307,6 +306,8 @@ exports.get_streamers = function (req, res, next) {
 				});
 				item.field_id = new Buffer( item.field_id, 'binary' ).toString();
 			});
+
+			console.log(request);
 
 			data.streamers = result;
 

@@ -481,19 +481,38 @@ exports.get_youtubers = function (req, res, next) {
 
             users = [];
 
-            for(var key in userChannelIndex) {
-                var videos = result.filter(function(element) {
-                    return element.snippet.channelId
-                        == userChannelIndex[key].youtube_id;
-                });
+            var ids = result.map(function(e) {
+                return e.snippet.resourceId.videoId;
+            })
 
-                userChannelIndex[key]['video'] = videos[0];
-                if(videos.length) {
-                    users.push(userChannelIndex[key]);
-                }
-            };
+            mysql.open(config.mysql)
+                .query('select count(comment_id) as comments, video_id from anytv_comments'
+                    +' where video_id in(\''+ids.join('\',\'')+'\')'
+                    +' group by video_id',
+                    [],
+                    function(e, rlt) {
+                        rlt.forEach(function(item, index) {
+                            var index = ids.indexOf(item.video_id);
+                            result[index].anytv_comment = item.comments
+                        });
 
-            return send_response(null, users);
+                        users = []
+
+                        for(var key in userChannelIndex) {
+                            var videos = result.filter(function(element) {
+                                return element.snippet.channelId
+                                    == userChannelIndex[key].youtube_id;
+                            });
+
+                            userChannelIndex[key]['video'] = videos[0];
+                            if(videos.length) {
+                                users.push(userChannelIndex[key]);
+                            }
+                        };
+
+                        return send_response(null, users);
+                    })
+                .end();
         },
         send_response = function (err, result) {
             if (err) {

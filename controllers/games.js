@@ -290,12 +290,35 @@ exports.get_game_videos = function (req, res, next) {
 					.sort({"snippet.publishedAt" : -1})
 					.skip((page-1)*limit)
 					.limit(limit)
-					.toArray(send_response);
+					.toArray(get_comments);
 			}
 
 			return send_response(null, []);
 		},
+		get_comments = function(err, result) {
+			if(err) {
+				return next(err);
+			}
 
+			var ids = result.map(function(e) {
+				return e.snippet.resourceId.videoId;
+			});
+
+			return mysql.open(config.mysql)
+				.query('select count(comment_id) as comments, video_id from anytv_comments'
+					+' where video_id in(\''+ids.join('\',\'')+'\')'
+					+' group by video_id',
+					[],
+					function(e, rlt) {
+						rlt.forEach(function(item, index) {
+							var index = ids.indexOf(item.video_id);
+							result[index].anytv_comment = item.comments
+						});
+
+						send_response(null, result);
+					})
+				.end();
+		},
 		send_response = function (err, result) {
 			if (err) {
 				logger.log('warn', 'Error getting the streamers');
@@ -462,8 +485,26 @@ exports.get_games_data = function(req, res, next) {
 		},
 		bind_videos = function(err, result) {
 			result = result ? result : [];
-			data.videos = result;
-			get_featured_games(null, []);
+			var ids = result.map(function(e) {
+				return e.snippet.resourceId.videoId;
+			});
+
+			return mysql.open(config.mysql)
+				.query('select count(comment_id) as comments, video_id from anytv_comments'
+					+' where video_id in(\''+ids.join('\',\'')+'\')'
+					+' group by video_id',
+					[],
+					function(e, rlt) {
+						rlt.forEach(function(item, index) {
+							var index = ids.indexOf(item.video_id);
+							result[index].anytv_comment = item.comments
+						});
+
+						data.videos = result;
+						get_featured_games(null, []);
+					})
+				.end();
+			//get_featured_games(null, []);
 		},
 		get_featured_games = function (err, result) {
 		    if(err) {

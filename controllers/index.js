@@ -328,50 +328,23 @@ exports.get_index = function (req, res, next) {
 			data.featured_users = result.map(function(item, i) {
 				return item.user_id;
 			}).join(',');
-
-			curl.get
-				.to(
-					config.community.url,
-					80,
-					'/zh/api/index.php')
-				.send({
-					'threads/recent': null
-				})
-				.then(get_threads);
-		},
-		get_threads = function (err, result) {
-			if(err) {
-				return next(err);
-			}
-			data.countThreads = 0;
-			data.recent_threads = [];
-			result.threads.forEach(function(item, i){
-				var tosend = {};
-				var name = 'threads/'+item.thread_id;
-				tosend[name] = null;
-				data.countThreads++;
-				curl.get
-					.to(
-						config.community.url,
-						80,
-						'/zh/api/index.php')
-					.send(tosend)
-					.then(currate_threads)
-			});
-		},
-		currate_threads = function(err, result) {
-			if(err) {
-				return next(err);
-			}
-
-			data.countThreads--;
-			data.recent_threads.push(result.thread);
-
-			if(!data.countThreads) {
-				get_popular_threads();
-			}
+			
+			mysql.open(config.mysql)
+					.query(
+						'select * from xf_thread inner Join \
+						xf_post on xf_post.thread_id = xf_thread.thread_id \
+						group by xf_post.thread_id order by \
+						xf_thread.post_date DESC limit 5',
+						[],
+						get_popular_threads
+					).end();
 		},
 		get_popular_threads = function(err, result) {
+			if(err) {
+				return next(err);
+			}
+
+			data.recent_threads = result;
 			mysql.open(config.mysql)
 					.query(
 						'select * from xf_thread inner Join \
