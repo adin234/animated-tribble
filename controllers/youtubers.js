@@ -96,6 +96,7 @@ exports.get_lan_party = function(req, res, next) {
         },
         get_videos = function(err, result) {
             data = result[0];
+            console.log(result);
             mongo.collection('lan_party_videos')
                 .find()
                 .toArray(get_playlists);

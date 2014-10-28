@@ -119,8 +119,16 @@ exports.get_youtube_streamers = function (req, res, next) {
 							.parse(JSON.stringify(item.user))
 
 						topush.youtube = iitem;
-
-						response.streamers.push(topush);
+						
+						var lanparty_check = req.query.checker || 'LAN PARTY';
+						lanparty_check = new RegExp(lanparty_check,'ig');
+						if(!req.query.lanparty || (
+							req.query.lanparty
+							&& topush.youtube.snippet
+								.description.reIndexOf(lanparty_check))
+						) {
+							response.streamers.push(topush);
+						}
 					});
 				}
 			};
@@ -264,16 +272,23 @@ exports.get_streamers = function (req, res, next) {
 			}
 
 			where = '';
+			join = '';
 
 			if(req.query.user) {
 				where = ' AND xf_user.user_id = '+req.query.user;
+			}
+
+			if(req.query.lanparty) {
+				join = 'INNER JOIN xf_user_group_relation ON \
+					xf_user_group_relation.user_id = xf_user.user_id';
+				where = ' AND xf_user_group_relation.user_group_id = 5';
 			}
 
 			mysql.open(config.mysql)
 				.query(
 					'SELECT * FROM xf_user_field_value INNER JOIN \
 					xf_user ON xf_user.user_id = xf_user_field_value.user_id \
-					WHERE field_id = ? AND field_value != ""'+where,
+					'+join+' WHERE field_id = ? AND field_value != ""'+where,
 					['twitchStreams'],
 					format_buffer
 				).end();
@@ -282,7 +297,7 @@ exports.get_streamers = function (req, res, next) {
 			if(err) {
 				return next(err);
 			}
-		
+
 			if(!cache) {
 				util.set_cache('streamers', JSON.parse(JSON.stringify(result)), 30);
 			}
@@ -307,8 +322,6 @@ exports.get_streamers = function (req, res, next) {
 				item.field_id = new Buffer( item.field_id, 'binary' ).toString();
 			});
 
-			console.log(request);
-
 			data.streamers = result;
 
 			curl.get
@@ -331,17 +344,32 @@ exports.get_streamers = function (req, res, next) {
 					return item.channel.name;
 				});
 
+			var streamers = [];
+
 			data.streamers = data.streamers.filter(function(item, i) {
 				item.field_value = item.field_value.filter(function(item2) {
 					var indexed = ~online_streamers.indexOf(item2);
 					if (indexed) {
 						item.twitch = result.streams[-(indexed)-1];
+						var newitem = JSON.parse(JSON.stringify(item));
+						newitem.field_value = [item2];
+						var lanparty_check = req.query.checker || 'LAN PARTY';
+						lanparty_check = new RegExp(lanparty_check,'ig');
+						if(!req.query.lanparty || (
+							req.query.lanparty
+							&& newitem.twitch.channel
+								.status.reIndexOf(lanparty_check))
+						) {
+							streamers.push(newitem);
+						}
 					}
 
 					return indexed;
 				});
 				return item.field_value.length;
 			});
+
+			data.streamers = streamers;
 			send_response(null, data);
 		},
 		send_response = function (err, result) {

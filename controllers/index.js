@@ -349,7 +349,7 @@ exports.get_index = function (req, res, next) {
 					.query(
 						'select * from xf_thread inner Join \
 						xf_post on xf_post.thread_id = xf_thread.thread_id \
-						group by xf_post.thread_id order by reply_count DESC limit 5',
+						group by xf_post.thread_id order by view_count DESC limit 5',
 						[],
 						get_users
 					).end();
