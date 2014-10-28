@@ -35,7 +35,16 @@ exports.get_youtube_streamers = function (req, res, next) {
 	var data = {},
 		user,
 		index = 0,
+		cacheKey = 'streamers.youtube',
 		start = function () {
+
+			var cache = util.get_cache(cacheKey);
+
+			if(cache) {
+				console.log('From Cache');
+				return res.send(cache);
+			}
+
 			mysql.open(config.mysql)
 				.query('SELECT user.*, refresh.*, youtube.field_value youtube \
 					FROM xf_user_field_value refresh INNER JOIN \
@@ -119,7 +128,7 @@ exports.get_youtube_streamers = function (req, res, next) {
 							.parse(JSON.stringify(item.user))
 
 						topush.youtube = iitem;
-						
+
 						var lanparty_check = req.query.checker || 'LAN PARTY';
 						lanparty_check = new RegExp(lanparty_check,'ig');
 						if(!req.query.lanparty || (
@@ -142,6 +151,8 @@ exports.get_youtube_streamers = function (req, res, next) {
 			}
 
 			console.log('will send result');
+
+			util.set_cache(cacheKey, 60);
 
 			res.send(result);
 		};
