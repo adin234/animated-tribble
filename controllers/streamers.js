@@ -274,12 +274,15 @@ exports.get_streamers = function (req, res, next) {
 	var data = {},
 		user,
 		cache,
+		cacheKey = 'streamers.twitch',
 		start = function () {
 			logger.log('info', 'Getting Streamers');
-			cache = JSON.parse(JSON.stringify(util.get_cache('streamers')));
 
-			if(!(typeof cache === 'undefined') && cache && !req.query.user) {
-				return format_buffer(null, cache);
+			var cache = util.get_cache(cacheKey);
+
+			if(cache) {
+				console.log('From Cache');
+				return res.send(cache);
 			}
 
 			where = '';
@@ -392,6 +395,8 @@ exports.get_streamers = function (req, res, next) {
 			if(result.length === 0) {
 				return res.status(500).send({message: 'user not found'});
 			}
+
+			util.set_cache(cacheKey, result, 60);
 
 			res.send(result);
 		};
