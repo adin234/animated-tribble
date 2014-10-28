@@ -49,8 +49,8 @@ exports.authenticate = function (req, res, next) {
 	var data = {},
 		user,
 		start = function() {
-			if(req.query.access && process.cache['access'][req.query.access] 
-				&& process.cache['access']
+			if(req.query.access && process.cache['access']
+				&& process.cache['access'][req.query.access] 
 				&& process.cache['access'][req.query.access]['user']['user_id'] == req.query.user) {
 				return send_response(null, {
 					status: '200',
