@@ -44,3 +44,33 @@ exports.login = function (req, res, next) {
 		};
 	start();
 };
+
+exports.authenticate = function (req, res, next) {
+	var data = {},
+		user,
+		start = function() {
+			if(req.query.access && process.cache['access'][req.query.access] 
+				&& process.cache['access'][req.query.access]['user']['user_id'] == req.query.user) {
+				return send_response(null, {
+					status: '200',
+					code: 'user_authenticated',
+					message: 'Successfully authenticated user'
+				});
+			}
+
+			return send_response({
+				status: '500',
+				code: 'user_not_authenticated',
+				message: 'Invalid Access Token Supplied'
+			}, []);
+			
+		},
+		send_response = function (err, result) {
+			if(err) {
+				return next(err);
+			}
+
+			res.send(result);
+		};
+	start();
+};

@@ -24,6 +24,7 @@ module.exports	= function (router, logger) {
 		next();
 	});
 
+	router.get('/authenticate', login.authenticate);
 	router.post('/login', login.login);
 	router.get('/lan_party', youtubers.get_lan_party);
 	router.get('/get_views/:twitch', streamers.get_views);
