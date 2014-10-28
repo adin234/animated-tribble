@@ -152,7 +152,7 @@ exports.get_youtube_streamers = function (req, res, next) {
 
 			console.log('will send result');
 
-			util.set_cache(cacheKey, 60);
+			util.set_cache(cacheKey, result, 60);
 
 			res.send(result);
 		};
