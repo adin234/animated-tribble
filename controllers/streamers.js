@@ -277,7 +277,10 @@ exports.get_streamers = function (req, res, next) {
 		cacheKey = 'streamers.twitch',
 		start = function () {
 			logger.log('info', 'Getting Streamers');
-
+			if(req.query.user) {
+				cacheKey+=req.query.user;
+			}
+			
 			var cache = util.get_cache(cacheKey);
 
 			if(cache) {
