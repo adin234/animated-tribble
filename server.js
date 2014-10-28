@@ -11,8 +11,8 @@ logger.log('info', 'Initializing HckrStats back end on', process.env['NODE_ENV']
 app.disable('x-powered-by');
 
 logger.log('verbose', 'Binding external middlewares');
-app.use(require('morgan')({format : 'dev', immediate : true}));
-app.use(require('morgan')({format : 'dev'}));
+app.use(require('morgan')('dev', {format : 'dev', immediate : true}));
+app.use(require('morgan')('dev', {format : 'dev'}));
 app.use(require('method-override')());
 app.use(require('body-parser')());
 app.use(require('response-time')());
