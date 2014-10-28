@@ -89,7 +89,16 @@ exports.get_suggestions = function(req, res, next) {
 
 exports.get_lan_party = function(req, res, next) {
     var data = {},
+        cacheKey = 'lanparty',
         start = function() {
+
+            var cache = util.get_cache(cacheKey);
+
+            if(cache) {
+                console.log('From Cache');
+                return res.send(cache);
+            }
+
             mongo.collection('lan_party')
                 .find({'_id':'details'})
                 .toArray(get_videos);
@@ -118,6 +127,9 @@ exports.get_lan_party = function(req, res, next) {
                 channel:    channel[channel.length-1],
                 playlist:   'UU'+channel[channel.length-1].substr(2)
             }
+
+            util.set_cache(cacheKey, data);
+
             res.send(data);
         };
     start();
