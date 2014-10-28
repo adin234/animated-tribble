@@ -14,7 +14,8 @@ logger.log('verbose', 'Binding external middlewares');
 app.use(require('morgan')('dev', {format : 'dev', immediate : true}));
 app.use(require('morgan')('dev', {format : 'dev'}));
 app.use(require('method-override')());
-app.use(require('body-parser')());
+app.use(require('body-parser').json());
+app.use(require('body-parser').urlencoded({extended:true}));
 app.use(require('response-time')());
 app.use(require('compression')());
 
