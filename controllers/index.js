@@ -295,9 +295,19 @@ exports.get_index = function (req, res, next) {
 							result[index].anytv_comment = item.comments
 						});
 
+						where = {};
+
+						if(req.query.console) {
+							where = {
+								'snippet.meta.tags' : {
+									$in : ['anytv_console_'+req.query.console]
+								}
+							}
+						}
+
 						data.latest_videos = result;
 							mongo.collection('videos')
-								.find()
+								.find(where)
 								.sort({
 									'snippet.meta.statistics.viewCount': -1
 								})
