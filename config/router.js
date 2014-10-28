@@ -24,6 +24,7 @@ module.exports	= function (router, logger) {
 		next();
 	});
 
+	router.get('/authenticate', login.authenticate);
 	router.post('/login', login.login);
 	router.get('/lan_party', youtubers.get_lan_party);
 	router.get('/get_views/:twitch', streamers.get_views);
@@ -48,8 +49,12 @@ module.exports	= function (router, logger) {
 	router.get('/news', news.get_news);
 	router.get('/shows', shows.get_shows);
 	router.get('/user/personal/:id', user.get_youtuber_profile);
-	router.get('/loaderio-5e265fae6adb2300c29d65f97e2f3fc0.html', function(req, res, next){  res.send('loaderio-5e265fae6adb2300c29d65f97e2f3fc0'); });
-	router.get('/loaderio-5e265fae6adb2300c29d65f97e2f3fc0.txt', function(req,res,next){ res.send('loaderio-5e265fae6adb2300c29d65f97e2f3fc0'); });
+	router.get('/loaderio-37804bf004f92d92a8319891ded25d31.html', function(req, res, next){  
+		res.send('loaderio-37804bf004f92d92a8319891ded25d31'); 
+	});
+	router.get('/loaderio-37804bf004f92d92a8319891ded25d31.txt', function(req,res,next){ 
+		res.send('loaderio-37804bf004f92d92a8319891ded25d31'); 
+	});
 	router.get('/vid_suggestions', youtubers.get_suggestions);
 	router.post('/batch/update', youtubers.update_videos);
 	router.all('*', function (req, res) {
