@@ -241,7 +241,7 @@ exports.get_game_videos = function (req, res, next) {
 				return next(err);
 			}
 
-			if(result.length > 0) {
+			if(result.length) {
 				var searchString = typeof req.query.search != 'undefined'
 					? regexEscape(req.query.search)
 					: '';
@@ -443,6 +443,9 @@ exports.get_games_data = function(req, res, next) {
 		page,
 		cacheKey = 'games.page',
 		cons,
+		regexEscape= function(s) {
+		    return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+		},
 		start = function() {
 			limit 	= parseInt(req.query.limit) || 25;
 			page 	= req.query.page || 1;
@@ -461,18 +464,31 @@ exports.get_games_data = function(req, res, next) {
 				? regexEscape(req.query.search)
 				: '';
 
-			var searchRegExp = new RegExp(searchString, 'i');
-			var filter = { '$or' : [
-				{'snippet.title' : searchRegExp},
-				{'snippet.channelTitle' : searchRegExp}
-				]
-			};
+			var filter = {};
 
-			if(req.query.console) {
-				filter['$and'] =  {
-					'snippet.meta.tags' : 'anytv_console_'+req.query.console
+			if(searchString.length) {
+				var searchRegExp = new RegExp(searchString, 'i');
+
+				filter = { '$or' : [
+					{'snippet.title' : searchRegExp},
+					{'snippet.channelTitle' : searchRegExp}
+					]
 				};
+
+				if(req.query.console) {
+					filter['$and'] =  {
+						'snippet.meta.tags' : 'anytv_console_'+req.query.console
+					};
+				}
+			} else {
+				if(req.query.console) {
+					filter =  {
+						'snippet.meta.tags' : 'anytv_console_'+req.query.console
+					};
+				}
 			}
+
+			console.log(filter);
 
 			return mongo.collection('videos')
 				.find(
