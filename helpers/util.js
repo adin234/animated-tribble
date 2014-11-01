@@ -118,7 +118,8 @@ exports.set_cache = function(key, value, ttl) {
 
 exports.get_cache = function(key, callback) {
     var cache = myCache.get(key, callback);
-    if(!Object.keys(cache).length) return false;
+    if(!Object.keys(cache) || typeof Object.keys(cache) === 'undefined' 
+        || !Object.keys(cache).length) return false;
 
     return cache[key];
 }
