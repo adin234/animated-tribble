@@ -134,8 +134,10 @@ exports.get_youtube_streamers = function (req, res, next) {
 						lanparty_check = new RegExp(lanparty_check,'ig');
 						if(!req.query.lanparty || (
 							req.query.lanparty
-							&& topush.youtube.snippet
-								.description.reIndexOf(lanparty_check))
+							&& (topush.youtube.snippet
+								.description.reIndexOf(lanparty_check)
+								|| topush.youtube.snippet
+									.title.reIndexOf(lanparty_check)))
 						) {
 							response.streamers.push(topush);
 						}
