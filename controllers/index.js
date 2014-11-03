@@ -24,17 +24,41 @@ exports.get_index = function (req, res, next) {
 				.query(
 					'SELECT option_value FROM EWRporta_options WHERE option_id = ?',
 					['recentnews_forum'],
-					get_slider_options
+					get_feature_list
 				);
+		},
+		get_feature_list = function(err, result) {
+			if(err) {
+				return next(err);
+			}
+
+			result = result[0];
+			data.forum = us.unserialize(new Buffer(result.option_value, 'binary')
+					.toString()).join(',');
+
+			mysql.open(config.mysql)
+				.query(
+					'SELECT * from xf_option where option_id in ("feature_list_header",'
+						+' "feature_list_items", "feature_list_active")',
+					[],
+					get_slider_options
+				).end();
 		},
 		get_slider_options = function(err, result) {
 			if(err) {
 				console.log('No results');
 				return next(err);
 			}
-			result = result[0];
-			data.forum = us.unserialize(new Buffer(result.option_value, 'binary')
-					.toString()).join(',');
+
+			$options = {};
+			result.forEach(function(item, i) {
+				$options[item.option_id] = new Buffer(item.option_value, 'binary')
+					.toString();
+			});
+
+			$options['feature_list_items'] = us.unserialize($options['feature_list_items']);
+
+			data.feature_list = $options;
 
 			mysql.open(config.mysql)
 				.query(
