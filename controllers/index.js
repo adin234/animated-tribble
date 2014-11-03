@@ -56,7 +56,21 @@ exports.get_index = function (req, res, next) {
 					.toString();
 			});
 
-			$options['feature_list_items'] = us.unserialize($options['feature_list_items']);
+			var tmp = us.unserialize($options['feature_list_items']);
+
+			$options['feature_list_items'] = [];
+
+			for(var i in tmp['image']) {
+				if(tmp['image'][i].trim().length
+					&& tmp['label'][i].trim().length
+					&& tmp['link'][i].trim().length ) {
+					$options['feature_list_items'].push({
+						image: tmp['image'][i],
+						label: tmp['label'][i],
+						link: tmp['link'][i]
+					});
+				}
+			}
 
 			data.feature_list = $options;
 
