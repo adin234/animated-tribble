@@ -376,7 +376,7 @@ exports.get_index = function (req, res, next) {
 			data.featured_users = result.map(function(item, i) {
 				return item.user_id;
 			}).join(',');
-			
+
 			mysql.open(config.mysql)
 					.query(
 						'select * from xf_thread inner Join \
@@ -459,6 +459,7 @@ exports.get_scrape = function (req, res, next) {
 	var data = {},
 		cacheKey = 'index.scrape',
 		start = function () {
+			cacheKey = req.params.twitch;
 			var cache = util.get_cache(cacheKey);
 
 			if(cache && typeof req.query.filter == 'undefined' && typeof req.query.console == 'undefined') {
