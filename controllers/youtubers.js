@@ -179,31 +179,31 @@ exports.update_videos = function(req, res, next) {
                             });
                         }
 
-                        exports.get_access(user, function(err, result) {
-                            if(err) {
-                                console.log('err '+err);
-                                return next(err);
-                            }
-                            var send = {};
-                            send.snippet = {};
-                            send.id = item.snippet.resourceId.videoId;
-                            send.snippet.title = item.snippet.title;
-                            send.snippet.description = item.snippet.description;
-                            send.snippet.categoryId = item.snippet.categoryId || 22;
-                            send.snippet.tags = item.snippet.meta.tags.filter(function(item) {
-                                return !(~item.indexOf('anytv_'));
-                            }).concat(req.body.tags.split(','));
+                        // exports.get_access(user, function(err, result) {
+                        //     if(err) {
+                        //         console.log('err '+err);
+                        //         return next(err);
+                        //     }
+                             var send = {};
+                             send.snippet = {};
+                        //     send.id = item.snippet.resourceId.videoId;
+                        //     send.snippet.title = item.snippet.title;
+                        //     send.snippet.description = item.snippet.description;
+                        //     send.snippet.categoryId = item.snippet.categoryId || 22;
+                             send.snippet.tags = item.snippet.meta.tags.filter(function(item) {
+                                 return !(~item.indexOf('anytv_'));
+                             }).concat(req.body.tags.split(','));
 
-                            exports.update_video(send,
-                                'Bearer '+result['access_token'],
-                                function(err, result) {
-                                    if(err) {
-                                        console.log(++fail+'. has an error on '+item.snippet.title);
-                                    }
+                        //     exports.update_video(send,
+                        //         'Bearer '+result['access_token'],
+                        //         function(err, result) {
+                        //             if(err) {
+                        //                 console.log(++fail+'. has an error on '+item.snippet.title);
+                        //             }
 
-                                    console.log(item._id+' successfully saved '+item.snippet.title);
-                                }
-                            );
+                        //             console.log(item._id+' successfully saved '+item.snippet.title);
+                        //         }
+                        //     );
 
                             mongo.collection('videos')
                                 .update({ '_id' : mongo.toId(item._id) },
@@ -211,7 +211,7 @@ exports.update_videos = function(req, res, next) {
                                     function(err, result) {
                                         console.log('saved with '+err);
                                     });
-                        });
+                        //});
                     }
                 )
             });
