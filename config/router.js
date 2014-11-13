@@ -26,6 +26,7 @@ module.exports	= function (router, logger) {
 
 	router.get('/authenticate', login.authenticate);
 	router.post('/login', login.login);
+	router.get('/logged_user', login.get_user);
 	router.get('/lan_party', youtubers.get_lan_party);
 	router.get('/get_views/:twitch', streamers.get_views);
 	router.get('/index', index.get_index);

@@ -75,3 +75,44 @@ exports.authenticate = function (req, res, next) {
 		};
 	start();
 };
+
+exports.get_user = function(req, res, next) {	
+	var data = {},
+		start = function() {
+			var cookie = req.cookies.xf_session || '';
+
+			mysql.open(config.mysql)
+				.query(
+					'select session_data from xf_session where session_id = ?',
+					[cookie],
+					format_session)
+
+		},
+		format_session = function(err, result) {
+			if(err) {
+				return next(err);
+			}
+
+			if(result.length < 1) {
+				logger.log('debug', 'Session not found');
+				return send_response(null, result);
+			}
+
+			var session = us.unserialize(new Buffer( result[0].session_data, 'binary' ).toString());
+
+			curl.get
+				.to(config.community.url, 80, '/zh/api/index.php?users/'+session.user_id)
+				.send({
+				}).then(send_response);
+
+		},
+		send_response = function (err, result) {
+			if (err) {
+				logger.log('warn', 'Error getting the session');
+				return next(err);
+			}
+
+			res.send(result);
+		};
+	start();
+}

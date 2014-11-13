@@ -1,8 +1,9 @@
-var express	= require('express'),
-    config	= require(__dirname + '/config/config'),
-    logger	= require(__dirname + '/lib/logger'),
-    http	= require('http'),
-    app		= express();
+var express      = require('express'),
+    config	     = require(__dirname + '/config/config'),
+    logger	     = require(__dirname + '/lib/logger'),
+    http	     = require('http'),
+    cookieParser = require('cookie-parser'),
+    app		     = express();
 
 http.globalAgent.maxSockets = 30;
 
@@ -18,7 +19,7 @@ app.use(require('body-parser').json());
 app.use(require('body-parser').urlencoded({extended:true}));
 app.use(require('response-time')());
 app.use(require('compression')());
-
+app.use(cookieParser());
 logger.log('verbose', 'Binding custom middlewares');
 app.use(require(__dirname + '/config/router')(express.Router(), logger));
 app.use(require(__dirname + '/lib/error_handler')());
