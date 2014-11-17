@@ -81,6 +81,8 @@ exports.get_user = function(req, res, next) {
 		start = function() {
 			var cookie = req.cookies.anytv_xf_session || '';
 
+			console.log(req.cookies);
+
 			mysql.open(config.mysql)
 				.query(
 					'select session_data from xf_session where session_id = ?',
