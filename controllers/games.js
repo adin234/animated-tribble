@@ -259,7 +259,8 @@ exports.get_game_videos = function (req, res, next) {
 					{
 						$or : [
 							{'snippet.title' : searchRegExp},
-							{'snippet.channelTitle' : searchRegExp}
+							{'snippet.channelTitle' : searchRegExp},
+							{'username' : searchRegExp}
 						]
 					}
 				]
@@ -284,7 +285,8 @@ exports.get_game_videos = function (req, res, next) {
 						{
 							$or : [
 								{'snippet.title' : searchRegExp},
-								{'snippet.channelTitle' : searchRegExp}
+								{'snippet.channelTitle' : searchRegExp},
+								{'username' : searchRegExp}
 							]
 						}
 					]
