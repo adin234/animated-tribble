@@ -112,7 +112,7 @@ exports.get_user = function(req, res, next) {
 				return next(err);
 			}
 
-			if(!result.length) {
+			if(!result.user) {
 				return next('no valid session');
 			}
 
