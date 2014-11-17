@@ -193,7 +193,7 @@ exports.get_game_videos = function (req, res, next) {
 
 			if(req.params.gameid == 'all' || req.params.gameid == '') {
 				params = [];
-				where = ''
+				where = '';
 			}
 
 			mysql.open(config.mysql)
@@ -212,14 +212,22 @@ exports.get_game_videos = function (req, res, next) {
 				return send_response(null, result);
 			}
 
-			var tags = result[0].tags.split(',').map(function(item) {
-				return item.trim();
-			});
+			if(req.params.gameid == 'all' || req.params.gameid == '') {
+				if(req.query.featured) {
+					return get_featured(null, []);
+				}
 
-			if(req.query.featured) {
-				return get_featured(null, tags);
+				get_videos(null, []);
+			} else {
+				var tags = result[0].tags.split(',').map(function(item) {
+					return item.trim();
+				});
+
+				if(req.query.featured) {
+					return get_featured(null, tags);
+				}
+				get_videos(null, tags);
 			}
-			get_videos(null, tags);
 		},
 		get_featured = function(err, resultags) {
 			mysql.open(config.mysql)
@@ -240,17 +248,37 @@ exports.get_game_videos = function (req, res, next) {
 				return next(err);
 			}
 
-			if(result.length) {
-				var searchString = typeof req.query.search != 'undefined'
-					? regexEscape(req.query.search)
-					: '';
+			var searchString = typeof req.query.search != 'undefined'
+				? regexEscape(req.query.search)
+				: '';
 
-				var searchRegExp = new RegExp(searchString, 'i');
+			var searchRegExp = new RegExp(searchString, 'i');
 
-				var find_params = {
-					$and : [{
-							'snippet.meta.tags' : {
-								$in : result
+			var find_params = {
+				$and : [
+					{
+						$or : [
+							{'snippet.title' : searchRegExp},
+							{'snippet.channelTitle' : searchRegExp}
+						]
+					}
+				]
+			};
+
+			if(req.params.gameid != 'all' && req.params.gameid != '') {
+				find_params['$and'].push({
+						'snippet.meta.tags' : {
+							$in : result
+						}
+					});
+			}
+
+			if(result.length && !!result[0].tags && result[0].tags) {
+				find_params = {
+					$and : [
+						{
+							'snippet.resourceId.videoId': {
+								$in: result[0].ids
 							}
 						},
 						{
@@ -261,38 +289,21 @@ exports.get_game_videos = function (req, res, next) {
 						}
 					]
 				};
-
-				if(result[0].tags) {
-					find_params = {
-						$and : [{
-								'snippet.meta.tags' : {
-									$in : result[0].tags
-								}
-							},
-							{
-								'snippet.resourceId.videoId': {
-									$in: result[0].ids
-								}
-							},
-							{
-								$or : [
-									{'snippet.title' : searchRegExp},
-									{'snippet.channelTitle' : searchRegExp}
-								]
-							}
-						]
-					}
-				}
-
-				return mongo.collection('videos')
-					.find(find_params)
-					.sort({"snippet.publishedAt" : -1})
-					.skip((page-1)*limit)
-					.limit(limit)
-					.toArray(get_comments);
+				if(req.params.gameid != 'all' && req.params.gameid != '') {
+				find_params['$and'].push({
+						'snippet.meta.tags' : {
+							$in : result[0].tags
+						}
+					});
+			}
 			}
 
-			return send_response(null, []);
+			return mongo.collection('videos')
+				.find(find_params)
+				.sort({"snippet.publishedAt" : -1})
+				.skip((page-1)*limit)
+				.limit(limit)
+				.toArray(get_comments);
 		},
 		get_comments = function(err, result) {
 			if(err) {
