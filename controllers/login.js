@@ -81,8 +81,6 @@ exports.get_user = function(req, res, next) {
 		start = function() {
 			var cookie = req.cookies.anytv_xf_session || '';
 
-			console.log(req.cookies);
-
 			mysql.open(config.mysql)
 				.query(
 					'select session_data from xf_session where session_id = ?',
@@ -114,7 +112,21 @@ exports.get_user = function(req, res, next) {
 				return next(err);
 			}
 
-			res.send(result);
+			if(!result.length) {
+				return next('no valid session');
+			}
+
+			var data = {
+				access_code : '',
+				links: {
+					avatar: result.user.links.avatar,
+					detail: result.user.links.detail,
+				},
+				user_id: result.user.user_id,
+				username: result.user.username
+			};
+
+			res.send(data);
 		};
 	start();
 }
