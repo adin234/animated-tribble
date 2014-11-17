@@ -38,7 +38,7 @@ exports.get_youtube_streamers = function (req, res, next) {
 		cacheKey = 'streamers.youtube',
 		start = function () {
 			cacheKey = req.query.lanparty ? cacheKey+'.lan' : cacheKey;
-			
+
 			var cache = util.get_cache(cacheKey);
 
 			if(cache) {
@@ -287,7 +287,7 @@ exports.get_streamers = function (req, res, next) {
 			if(req.query.lanparty) {
 				cacheKey+='.lanparty';
 			}
-			
+
 			var cache = util.get_cache(cacheKey);
 
 			if(cache) {

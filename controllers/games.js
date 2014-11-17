@@ -148,7 +148,6 @@ exports.get_game_data = function(req, res, next) {
 										return game.id == req.params.gameid;
 									});
 
-									data.game_name = name[0];
 									send_response(null, data);
 								}
 							}, next)
