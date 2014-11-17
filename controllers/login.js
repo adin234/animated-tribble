@@ -126,7 +126,7 @@ exports.get_user = function(req, res, next) {
 				username: result.user.username
 			};
 
-			res.send(data);
+			res.jsonp(data);
 		};
 	start();
 }
