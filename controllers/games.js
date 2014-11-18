@@ -147,8 +147,8 @@ exports.get_game_data = function(req, res, next) {
 									var name = result.filter(function(game) {
 										return game.id == req.params.gameid;
 									});
-
-									send_response(null, data);
+								data.game_name = name[0] || {};
+								send_response(null, data);
 								}
 							}, next)
 						}
