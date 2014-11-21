@@ -631,6 +631,7 @@ exports.search = function (req, res, next) {
                              AND field_value \
                              IS NOT NULL and field_value <> '' \
                        ) AND username LIKE ? \
+                    AND secondary_group_ids LIKE '%%6%%' \
                     LIMIT 5",
                     ['%%'+req.query.query+'%%'],
                     send_response
