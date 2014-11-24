@@ -145,7 +145,7 @@ exports.get_favorite_ids = function (req, res, next) {
 			send_response(null, result);
 		}
 		send_response = function (err, result) {
-			res.jsonp(data);
+			res.jsonp(result);
 		};
 
 	start();
