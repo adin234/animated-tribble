@@ -14,12 +14,6 @@ exports.fav_video = function(req, res, next) {
         videoId,
         start = function() {
             get_user_id();
-            videoId = req.params.videoId;
-            if(!userId) {
-                return next({message: 'user not logged in'});
-            }
-
-            add_fav(null);
         },
         get_user_id = function() {
         	login.get_user(req, {
@@ -27,8 +21,17 @@ exports.fav_video = function(req, res, next) {
         		jsonp: function(result) {
         			console.log(result);
         			userId = result.user_id || false;
+        			get_videos();
         		}
         	}, next);
+        },
+        get_videos = function() {
+            videoId = req.params.videoId;
+            if(!userId) {
+                return next({message: 'user not logged in'});
+            }
+
+            add_fav(null);
         },
         add_fav = function(err) {
             mongo.collection('favorites')
@@ -56,12 +59,6 @@ exports.unfav_video = function(req, res, next) {
      	videoId,
         start = function() {
             get_user_id();
-            videoId = req.params.videoId;
-            if(!userId) {
-                return next(err);
-            }
-
-            un_fav(null);
         },
         get_user_id = function() {
         	login.get_user(req, {
@@ -69,8 +66,17 @@ exports.unfav_video = function(req, res, next) {
         		jsonp: function(result) {
         			console.log(result);
         			userId = result.user_id || false;
+        			get_videos();
         		}
         	}, next);
+        },
+        get_videos = function() {
+            videoId = req.params.videoId;
+            if(!userId) {
+                return next(err);
+            }
+
+            un_fav(null);
         },
         un_fav = function(err) {
             mongo.collection('favorites')
@@ -98,7 +104,19 @@ exports.get_favorites = function (req, res, next) {
 		cacheKey = 'favorites.page',
 		start = function () {
 			get_user_id();
-            if(!userId) {
+		},
+		get_user_id = function() {
+        	login.get_user(req, {
+        		status: function() {},
+        		jsonp: function(result) {
+        			console.log(result);
+        			userId = result.user_id || false;
+        			get_videos();
+        		}
+        	}, next);
+        },
+        get_videos = function() {
+			if(!userId) {
             	return send_response({'message': 'Not logged in.'});
             }
 			cacheKey = cacheKey + userId;
@@ -113,15 +131,6 @@ exports.get_favorites = function (req, res, next) {
             }
 
             get_favorites(null);
-		},
-		get_user_id = function() {
-        	login.get_user(req, {
-        		status: function() {},
-        		jsonp: function(result) {
-        			console.log(result);
-        			userId = result.user_id || false;
-        		}
-        	}, next);
         },
 		get_favorites = function (err, result) {
 			if(err) {
