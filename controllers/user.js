@@ -111,7 +111,7 @@ exports.get_favorites = function (req, res, next) {
         		jsonp: function(result) {
         			console.log(result);
         			userId = result.user_id || false;
-        			get_fav;
+        			get_fav();
         		}
         	}, next);
         },
