@@ -50,6 +50,7 @@ module.exports	= function (router, logger) {
 	router.get('/news', news.get_news);
 	router.get('/shows', shows.get_shows);
 	router.get('/favorites', user.get_favorites);
+	router.get('/favorite-ids', user.get_favorite_ids);
 	router.get('/fav/:videoId', user.fav_video);
 	router.get('/unfav/:videoId', user.unfav_video);
 	router.get('/user/personal/:id', user.get_youtuber_profile);

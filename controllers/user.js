@@ -98,6 +98,59 @@ exports.unfav_video = function(req, res, next) {
     start();
 };
 
+exports.get_favorite_ids = function (req, res, next) {
+	var data = {},
+		userId,
+		cacheKey = 'favorites.ids',
+		start = function () {
+			get_user_id();
+		},
+		get_user_id = function() {
+        	login.get_user(req, {
+        		status: function() {},
+        		jsonp: function(result) {
+        			console.log(result);
+        			userId = result.user_id || false;
+        			get_fav();
+        		}
+        	}, next);
+        },
+        get_fav = function() {
+			if(!userId) {
+            	return send_response({'message': 'Not logged in.'});
+            }
+			cacheKey = cacheKey + userId;
+            get_favorites(null);
+        },
+		get_favorites = function (err, result) {
+			if(err) {
+				return next(err);
+			}
+			data.config = {};
+			data.config.channel = {};
+			data.config.playlist = {};
+
+			return mongo.collection('favorites')
+				.find({'user_id': userId})
+				.toArray(get_videos);
+		},
+		get_videos = function (err, result) {
+			if(err) {
+				return next(err);
+			}
+			console.log(err, result);
+
+			result = result[0].items;
+
+			send_response(null, result);
+		}
+		send_response = function (err, result) {
+			res.jsonp(data);
+		};
+
+	start();
+};
+
 exports.get_favorites = function (req, res, next) {
 	var data = {},
 		userId,
