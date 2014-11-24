@@ -111,11 +111,11 @@ exports.get_favorites = function (req, res, next) {
         		jsonp: function(result) {
         			console.log(result);
         			userId = result.user_id || false;
-        			get_videos();
+        			get_fav;
         		}
         	}, next);
         },
-        get_videos = function() {
+        get_fav = function() {
 			if(!userId) {
             	return send_response({'message': 'Not logged in.'});
             }
@@ -148,8 +148,9 @@ exports.get_favorites = function (req, res, next) {
 			if(err) {
 				return next(err);
 			}
+			console.log(err, result);
 
-			result = result[0];
+			result = result[0] || {items: []};
 
 			return mongo.collection('videos')
 				.find({'snippet.resourceId.videoId': {$in: result.items}})
