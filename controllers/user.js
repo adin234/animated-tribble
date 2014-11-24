@@ -24,7 +24,7 @@ exports.fav_video = function(req, res, next) {
         get_user_id = function() {
         	login.get_user(req, {
         		status: function() {},
-        		send: function(result) {
+        		jsonp: function(result) {
         			console.log(result);
         			userId = result.user_id || false;
         		}
@@ -66,7 +66,7 @@ exports.unfav_video = function(req, res, next) {
         get_user_id = function() {
         	login.get_user(req, {
         		status: function() {},
-        		send: function(result) {
+        		jsonp: function(result) {
         			console.log(result);
         			userId = result.user_id || false;
         		}
@@ -117,7 +117,7 @@ exports.get_favorites = function (req, res, next) {
 		get_user_id = function() {
         	login.get_user(req, {
         		status: function() {},
-        		send: function(result) {
+        		jsonp: function(result) {
         			console.log(result);
         			userId = result.user_id || false;
         		}
