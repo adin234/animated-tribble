@@ -174,7 +174,7 @@ exports.get_favorites = function (req, res, next) {
 				util.set_cache(cacheKey, data);
             }
 
-			res.send(data);
+			res.jsonp(data);
 		};
 
 	start();
