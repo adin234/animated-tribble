@@ -171,7 +171,7 @@ exports.get_favorites = function (req, res, next) {
 				&& typeof req.query.filter == 'undefined'
             	&& typeof req.query.console == 'undefined'
             	&& typeof req.query.playlist == 'undefined') {
-				util.set_cache(cacheKey, result);
+				util.set_cache(cacheKey, data);
             }
 
 			res.send(data);
