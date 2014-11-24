@@ -49,12 +49,15 @@ module.exports	= function (router, logger) {
 	router.get('/games/:gameid/playlists', games.get_game_playlists);
 	router.get('/news', news.get_news);
 	router.get('/shows', shows.get_shows);
+	router.get('/favorites', user.get_favorites);
+	router.get('/fav/:videoId', user.fav_video);
+	router.get('/unfav/:videoId', user.unfav_video);
 	router.get('/user/personal/:id', user.get_youtuber_profile);
-	router.get('/loaderio-37804bf004f92d92a8319891ded25d31.html', function(req, res, next){  
-		res.send('loaderio-37804bf004f92d92a8319891ded25d31'); 
+	router.get('/loaderio-37804bf004f92d92a8319891ded25d31.html', function(req, res, next){
+		res.send('loaderio-37804bf004f92d92a8319891ded25d31');
 	});
-	router.get('/loaderio-37804bf004f92d92a8319891ded25d31.txt', function(req,res,next){ 
-		res.send('loaderio-37804bf004f92d92a8319891ded25d31'); 
+	router.get('/loaderio-37804bf004f92d92a8319891ded25d31.txt', function(req,res,next){
+		res.send('loaderio-37804bf004f92d92a8319891ded25d31');
 	});
 	router.get('/vid_suggestions', youtubers.get_suggestions);
 	router.post('/batch/update', youtubers.update_videos);

@@ -5,6 +5,168 @@ var config 			= require(__dirname + '/../config/config'),
     logger         	= require(__dirname + '/../lib/logger'),
     Q				= require('q'),
     mongo			= require(__dirname + '/../lib/mongoskin');
+    login			= require(__dirname + '/login');
+
+
+exports.fav_video = function(req, res, next) {
+    var data = {},
+        userId,
+        videoId,
+        start = function() {
+            get_user_id();
+            videoId = req.params.videoId;
+            if(!userId) {
+                return next({message: 'user not logged in'});
+            }
+
+            add_fav(null);
+        },
+        get_user_id = function() {
+        	login.get_user(req, {
+        		status: function() {},
+        		send: function(result) {
+        			console.log(result);
+        			userId = result.user_id || false;
+        		}
+        	}, next);
+        },
+        add_fav = function(err) {
+            mongo.collection('favorites')
+                .update({ 'user_id' : userId },
+                    {'$addToSet' : {"items" : videoId}},
+                    {'upsert': true},
+                    function(err, result) {
+                        send_response(err, result);
+                    });
+        },
+        send_response = function(err, result) {
+            if(err) {
+                return next(err);
+            }
+
+            res.send(result);
+        };
+
+    start();
+};
+
+exports.unfav_video = function(req, res, next) {
+     var data = {},
+        start = function() {
+            get_user_id();
+            videoId = req.params.videoId;
+            if(!userId) {
+                return next(err);
+            }
+
+            un_fav(null);
+        },
+        get_user_id = function() {
+        	login.get_user(req, {
+        		status: function() {},
+        		send: function(result) {
+        			console.log(result);
+        			userId = result.user_id || false;
+        		}
+        	}, next);
+        },
+        un_fav = function(err) {
+            mongo.collection('favorites')
+                .update({ 'user_id' : userId },
+                    {'$pull' : {"items" : videoId}},
+                    {'upsert': true},
+                    function(err, result) {
+                        send_response(err, result);
+                    });
+        },
+        send_response = function(err, result) {
+            if(err) {
+                return next(err);
+            }
+
+            res.send(result);
+        };
+
+    start();
+};
+
+exports.get_favorites = function (req, res, next) {
+	var data = {},
+		user,
+		cacheKey = 'favorites.page',
+		start = function () {
+			get_user_id();
+            if(!userId) {
+            	return send_response({'message': 'Not logged in.'});
+            }
+			cacheKey = cacheKey + userId;
+
+			var cache = util.get_cache(cacheKey);
+
+            if(cache && typeof req.query.filter == 'undefined'
+            	&& typeof req.query.console == 'undefined'
+            	&& typeof req.query.playlist == 'undefined') {
+                console.log('From Cache');
+                return res.send(cache);
+            }
+
+            get_favorites(null);
+		},
+		get_user_id = function() {
+        	login.get_user(req, {
+        		status: function() {},
+        		send: function(result) {
+        			console.log(result);
+        			userId = result.user_id || false;
+        		}
+        	}, next);
+        },
+		get_favorites = function (err, result) {
+			if(err) {
+				return next(err);
+			}
+			data.config = {};
+			data.config.channel = {};
+			data.config.playlist = {};
+
+			return mongo.collection('favorites')
+				.find({'user_id': userId})
+				.toArray(get_videos);
+		},
+		get_videos = function (err, result) {
+			if(err) {
+				return next(err);
+			}
+
+			result = result[0];
+
+			return mongo.collection('videos')
+				.find({'snippet.resourceId.videoId': {$in: result.items}})
+				.toArray(format_video);
+		},
+		format_video = function (err, result) {
+			if(err) {
+				return next(err);
+			}
+			data.videos = result;
+			data.playlists = [];
+			data.categories = [];
+			return send_response(err, result);
+		},
+		send_response = function (err, result) {
+
+			if(typeof cache =='undefined'
+				&& typeof req.query.filter == 'undefined'
+            	&& typeof req.query.console == 'undefined'
+            	&& typeof req.query.playlist == 'undefined') {
+				util.set_cache(cacheKey, result);
+            }
+
+			res.send(data);
+		};
+
+	start();
+};
 
 exports.get_user = function (req, res, next) {
 	var data = {},
