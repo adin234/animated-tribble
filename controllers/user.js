@@ -52,6 +52,8 @@ exports.fav_video = function(req, res, next) {
 
 exports.unfav_video = function(req, res, next) {
      var data = {},
+     	userId,
+     	videoId,
         start = function() {
             get_user_id();
             videoId = req.params.videoId;
@@ -92,7 +94,7 @@ exports.unfav_video = function(req, res, next) {
 
 exports.get_favorites = function (req, res, next) {
 	var data = {},
-		user,
+		userId,
 		cacheKey = 'favorites.page',
 		start = function () {
 			get_user_id();
