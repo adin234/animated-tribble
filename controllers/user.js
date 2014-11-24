@@ -127,7 +127,7 @@ exports.get_favorites = function (req, res, next) {
             	&& typeof req.query.console == 'undefined'
             	&& typeof req.query.playlist == 'undefined') {
                 console.log('From Cache');
-                return res.send(cache);
+                return res.jsonp(cache);
             }
 
             get_favorites(null);
