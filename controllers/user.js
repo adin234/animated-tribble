@@ -139,8 +139,11 @@ exports.get_favorite_ids = function (req, res, next) {
 				return next(err);
 			}
 			console.log(err, result);
-
-			result = result[0].items;
+			if(result.length) {
+				result = result[0].items;
+			} else {
+				result = [];
+			}
 
 			send_response(null, result);
 		}
