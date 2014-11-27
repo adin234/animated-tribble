@@ -12,9 +12,10 @@ exports.get_news = function (req, res, next) {
 		user,
 		cacheKey = 'news.page',
 		start = function () {
+			cacheKey = cacheKey+req.query.playlist;
 			var cache = util.get_cache(cacheKey);
 
-            if(cache && typeof req.query.filter == 'undefined' 
+            if(cache && typeof req.query.filter == 'undefined'
             	&& typeof req.query.console == 'undefined'
             	&& typeof req.query.playlist == 'undefined') {
                 console.log('From Cache');
@@ -61,7 +62,7 @@ exports.get_news = function (req, res, next) {
 		},
 		get_news_videos = function (err, result) {
 			if(err) {
-				return next(err);	
+				return next(err);
 			}
 			data.config = {};
 			data.config.channel = new Buffer(result[0].channel, 'binary').toString();
@@ -132,9 +133,9 @@ exports.get_news = function (req, res, next) {
 			if(!result || result.length === 0) {
 				return res.status(500).send({message: 'user not found'});
 			}
-			
-			if(typeof cache =='undefined' 
-				&& typeof req.query.filter == 'undefined' 
+
+			if(typeof cache =='undefined'
+				&& typeof req.query.filter == 'undefined'
             	&& typeof req.query.console == 'undefined'
             	&& typeof req.query.playlist == 'undefined') {
 				util.set_cache(cacheKey, result);
