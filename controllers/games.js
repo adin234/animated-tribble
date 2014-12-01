@@ -302,13 +302,13 @@ exports.get_game_videos = function (req, res, next) {
 				}
 			}
 
-			if(req.params.console !== 'undedfined'
-			&& req.params.console != 'all'
-			&& req.params.console != '') {
-				find_params['$and'].push({
-					'snippet.meta.tags' : 'anytv_console_'+req.params.console
-				});
-			}
+			// if(req.params.console !== 'undedfined'
+			// && req.params.console != 'all'
+			// && req.params.console != '') {
+			// 	find_params['$and'].push({
+			// 		'snippet.meta.tags' : 'anytv_console_'+req.params.console
+			// 	});
+			// }
 
 			return mongo.collection('videos')
 				.find(find_params)
