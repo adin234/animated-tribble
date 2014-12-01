@@ -181,7 +181,9 @@ exports.get_game_videos = function (req, res, next) {
 			limit 	= parseInt(req.query.limit) || 25;
 			page 	= req.query.page || 1;
 
-			var cache = util.get_cache(cacheKey+'.'+page);
+			cacheKey = cacheKey+'.'+page+req.params.console+req.params.gameid;
+
+			var cache = util.get_cache(cacheKey);
 
             if(cache && typeof req.query.filter == 'undefined' && typeof req.query.console == 'undefined') {
                 console.log('From Cache');
@@ -268,10 +270,10 @@ exports.get_game_videos = function (req, res, next) {
 
 			if(req.params.gameid != 'all' && req.params.gameid != '') {
 				find_params['$and'].push({
-						'snippet.meta.tags' : {
-							$in : result
-						}
-					});
+					'snippet.meta.tags' : {
+						$in : result
+					}
+				});
 			}
 
 			if(result.length && !!result[0].tags && result[0].tags) {
@@ -292,12 +294,20 @@ exports.get_game_videos = function (req, res, next) {
 					]
 				};
 				if(req.params.gameid != 'all' && req.params.gameid != '') {
-				find_params['$and'].push({
+					find_params['$and'].push({
 						'snippet.meta.tags' : {
 							$in : result[0].tags
 						}
 					});
+				}
 			}
+
+			if(req.params.console !== 'undedfined'
+			&& req.params.console != 'all'
+			&& req.params.console != '') {
+				find_params['$and'].push({
+					'snippet.meta.tags' : 'anytv_console_'+req.params.console
+				});
 			}
 
 			return mongo.collection('videos')
@@ -337,7 +347,7 @@ exports.get_game_videos = function (req, res, next) {
 				return next(err);
 			}
 
-			util.set_cache(cacheKey+'.'+page, result);
+			util.set_cache(cacheKey, result);
 
 			res.send(result);
 		};
