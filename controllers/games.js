@@ -171,7 +171,7 @@ exports.get_game_videos = function (req, res, next) {
 		user,
 		limit,
 		page,
-		cacheKey = 'games.video.'+req.params.gameid,
+		cacheKey = 'games.video.',
 		regexEscape= function(s) {
 		    return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 		},
@@ -181,7 +181,7 @@ exports.get_game_videos = function (req, res, next) {
 			limit 	= parseInt(req.query.limit) || 25;
 			page 	= req.query.page || 1;
 
-			cacheKey = cacheKey+'.'+page+req.params.console+req.params.gameid;
+			cacheKey = cacheKey+'.'+page+req.query.console+req.params.gameid;
 
 			var cache = util.get_cache(cacheKey);
 
@@ -302,13 +302,13 @@ exports.get_game_videos = function (req, res, next) {
 				}
 			}
 
-			// if(req.params.console !== 'undedfined'
-			// && req.params.console != 'all'
-			// && req.params.console != '') {
-			// 	find_params['$and'].push({
-			// 		'snippet.meta.tags' : 'anytv_console_'+req.params.console
-			// 	});
-			// }
+			if(typeof req.query.console !== 'undefined'
+			&& req.query.console != 'all'
+			&& req.query.console != '') {
+				find_params['$and'].push({
+					'snippet.meta.tags' : 'anytv_console_'+req.query.console
+				});
+			}
 
 			return mongo.collection('videos')
 				.find(find_params)
