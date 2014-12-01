@@ -103,6 +103,10 @@ exports.get_games = function (req, res, next) {
 				}
 			}
 
+			finalvalue.sort(function(a, b) {
+				return -(a.sort - b.sort);
+			});
+
 			return send_response(null, [finalvalue]);
 		},
 		send_response = function (err, result) {
