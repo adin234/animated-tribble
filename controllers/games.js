@@ -97,7 +97,8 @@ exports.get_games = function (req, res, next) {
 						consoles: gameConsole[values.game_id[i]],
 						name	: values.game_name[i],
 						image	: values.game_image[i],
-						chinese : values.game_chi[i]
+						chinese : values.game_chi[i],
+						sort	: values.sort[i]
 					});
 				}
 			}
