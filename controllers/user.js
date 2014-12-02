@@ -158,6 +158,8 @@ exports.get_favorites = function (req, res, next) {
 	var data = {},
 		userId,
 		cacheKey = 'favorites.page',
+		favoriteVideos = [],
+		favoriteIds = [],
 		start = function () {
 			get_user_id();
 		},
@@ -207,16 +209,30 @@ exports.get_favorites = function (req, res, next) {
 			console.log(err, result);
 
 			result = result[0] || {items: []};
-
+			favoriteIds = result.items;
 			return mongo.collection('videos')
-				.find({'snippet.resourceId.videoId': {$in: result.items}})
+				.find({'snippet.resourceId.videoId': {$in: favoriteIds}})
+				.toArray(get_shows);
+		},
+		get_shows = function (err, result) {
+			favoriteVideos = favoriteVideos.concat(result);
+
+			return mongo.collection('shows')
+				.find({'snippet.resourceId.videoId': {$in: favoriteIds}})
+				.toArray(get_news);
+		},
+		get_news = function(err, result) {
+			favoriteVideos = favoriteVideos.concat(result);
+
+			return mongo.collection('news')
+				.find({'snippet.resourceId.videoId': {$in: favoriteIds}})
 				.toArray(format_video);
 		},
 		format_video = function (err, result) {
 			if(err) {
 				return next(err);
 			}
-			data.videos = result;
+			data.videos = favoriteVideos.concat(result);
 			data.playlists = [];
 			data.categories = [];
 			return send_response(err, result);
