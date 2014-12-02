@@ -179,14 +179,14 @@ exports.get_favorites = function (req, res, next) {
             }
 			cacheKey = cacheKey + userId;
 
-			var cache = util.get_cache(cacheKey);
+			// var cache = util.get_cache(cacheKey);
 
-            if(cache && typeof req.query.filter == 'undefined'
-            	&& typeof req.query.console == 'undefined'
-            	&& typeof req.query.playlist == 'undefined') {
-                console.log('From Cache');
-                return res.jsonp(cache);
-            }
+   //          if(cache && typeof req.query.filter == 'undefined'
+   //          	&& typeof req.query.console == 'undefined'
+   //          	&& typeof req.query.playlist == 'undefined') {
+   //              console.log('From Cache');
+   //              return res.jsonp(cache);
+   //          }
 
             get_favorites(null);
         },
