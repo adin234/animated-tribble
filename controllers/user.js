@@ -215,6 +215,7 @@ exports.get_favorites = function (req, res, next) {
 				.toArray(get_shows);
 		},
 		get_shows = function (err, result) {
+			console.log(result);
 			favoriteVideos = favoriteVideos.concat(result);
 
 			return mongo.collection('shows')
@@ -222,6 +223,7 @@ exports.get_favorites = function (req, res, next) {
 				.toArray(get_news);
 		},
 		get_news = function(err, result) {
+			console.log(result);
 			favoriteVideos = favoriteVideos.concat(result);
 
 			return mongo.collection('news')
@@ -232,6 +234,7 @@ exports.get_favorites = function (req, res, next) {
 			if(err) {
 				return next(err);
 			}
+			console.log(result);
 			data.videos = favoriteVideos.concat(result);
 			data.playlists = [];
 			data.categories = [];
