@@ -14,6 +14,9 @@ exports.get_games = function (req, res, next) {
 		gameConsole = {},
 		start = function () {
 			logger.log('info', 'Getting Games');
+
+			cacheKey = cacheKey+req.query.featured+req.query.filter;
+
 			var cache = util.get_cache(cacheKey);
 
             if(cache && typeof req.query.filter == 'undefined' && typeof req.query.console == 'undefined') {
@@ -104,7 +107,7 @@ exports.get_games = function (req, res, next) {
 			}
 
 			finalvalue.sort(function(a, b) {
-				return -(a.sort - b.sort);
+				return a.sort - b.sort;
 			});
 
 			return send_response(null, [finalvalue]);
