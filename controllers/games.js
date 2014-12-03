@@ -259,7 +259,7 @@ exports.get_game_videos = function (req, res, next) {
 				? regexEscape(req.query.search)
 				: '';
 
-			var searchRegExp = new RegExp(searchString, 'i');
+			var searchRegExp = new RegExp(searchString, 'ig');
 
 			var find_params = {
 				$and : [
