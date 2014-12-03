@@ -247,7 +247,7 @@ exports.get_game_videos = function (req, res, next) {
 					[],
 					function(err, result) {
 						get_videos(err, [{
-							ids : result.map(function(item) { return item.video_id; }),
+							ids : result.map(function(item) { return new RegExp(item.video_id, 'i'); }),
 							tags: resultags
 						}])
 					}
@@ -262,7 +262,7 @@ exports.get_game_videos = function (req, res, next) {
 				? regexEscape(req.query.search)
 				: '';
 
-			var searchRegExp = new RegExp(searchString, 'ig');
+			var searchRegExp = new RegExp(searchString, 'i');
 
 			var find_params = {
 				$and : [
