@@ -50,7 +50,7 @@ exports.authenticate = function (req, res, next) {
 		user,
 		start = function() {
 			if(req.query.access && process.cache['access']
-				&& process.cache['access'][req.query.access] 
+				&& process.cache['access'][req.query.access]
 				&& process.cache['access'][req.query.access]['user']['user_id'] == req.query.user) {
 				return send_response(null, {
 					status: '200',
@@ -64,7 +64,7 @@ exports.authenticate = function (req, res, next) {
 				code: 'user_not_authenticated',
 				message: 'Invalid Access Token Supplied'
 			}, []);
-			
+
 		},
 		send_response = function (err, result) {
 			if(err) {
@@ -76,7 +76,7 @@ exports.authenticate = function (req, res, next) {
 	start();
 };
 
-exports.get_user = function(req, res, next) {	
+exports.get_user = function(req, res, next) {
 	var data = {},
 		start = function() {
 			var cookie = req.cookies.anytv_xf_session || '';
@@ -98,7 +98,7 @@ exports.get_user = function(req, res, next) {
 				return send_response(null, result);
 			}
 
-			var session = us.unserialize(new Buffer( result[0].session_data, 'binary' ).toString());
+			var session = us.unserialize(new Buffer( result[0].session_data, 'binary' ).toString().replace(/s:2:\"ip";s:4:\"[^\"]*/i, 's:2\"ip";s:4:"1234'));
 
 			curl.get
 				.to(config.community.url, 80, '/zh/api/index.php?users/'+session.user_id)
