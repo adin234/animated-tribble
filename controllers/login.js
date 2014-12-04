@@ -79,7 +79,6 @@ exports.authenticate = function (req, res, next) {
 exports.get_user = function(req, res, next) {
 	var data = {},
 		start = function() {
-			req.cookies.anytv_xf_session = 'b82484ef809054e3ae1311decd98419b';
 			var cookie = req.cookies.anytv_xf_session || '';
 
 			mysql.open(config.mysql)
