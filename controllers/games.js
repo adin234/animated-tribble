@@ -14,8 +14,8 @@ exports.get_games = function (req, res, next) {
 		gameConsole = {},
 		start = function () {
 			logger.log('info', 'Getting Games');
-
 			cacheKey = cacheKey+req.query.featured+req.query.filter;
+			console.log(req.query + '\n' + req.query.filter + '\n' + cacheKey);
 
 			var cache = util.get_cache(cacheKey);
 
@@ -230,7 +230,7 @@ exports.get_game_videos = function (req, res, next) {
 				get_videos(null, []);
 			} else {
 				var tags = result[0].tags.split(',').map(function(item) {
-					return item.trim();
+					return new RegExp(item.trim(), 'i');
 				});
 
 				if(req.query.featured) {
@@ -247,7 +247,7 @@ exports.get_game_videos = function (req, res, next) {
 					[],
 					function(err, result) {
 						get_videos(err, [{
-							ids : result.map(function(item) { return item.video_id; }),
+							ids : result.map(function(item) { return new RegExp(item.video_id, 'i'); }),
 							tags: resultags
 						}])
 					}
