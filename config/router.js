@@ -42,6 +42,7 @@ module.exports	= function (router, logger) {
 	router.get('/youtubers/videos/:id/comment', youtubers.get_comments);
 	router.post('/youtubers/videos/:id/comment', youtubers.post_comment);
 	router.get('/youtubers/search', youtubers.search);
+	router.get('/youtubers/search_youtubers', youtubers.search_youtubers);
 	router.get('/game/:gameid', games.get_game_data);
 	router.get('/gamesdata', games.get_games_data);
 	router.get('/games', games.get_games);

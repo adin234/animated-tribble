@@ -14,8 +14,8 @@ exports.get_games = function (req, res, next) {
 		gameConsole = {},
 		start = function () {
 			logger.log('info', 'Getting Games');
-
 			cacheKey = cacheKey+req.query.featured+req.query.filter;
+			console.log(req.query + '\n' + req.query.filter + '\n' + cacheKey);
 
 			var cache = util.get_cache(cacheKey);
 
