@@ -70,6 +70,7 @@ exports.get_news = function (req, res, next) {
 
 			return mongo.collection('news')
 				.find()
+				.sort({'snippet.publishedAt': -1})
 				.toArray(get_news_playlists);
 		},
 		get_news_playlists = function (err, result) {

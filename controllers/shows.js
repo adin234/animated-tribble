@@ -63,6 +63,7 @@ exports.get_shows = function (req, res, next) {
 
 			return mongo.collection('shows')
 				.find()
+				.sort({'snippet.publishedAt': -1})
 				.toArray(get_shows_playlists);
 		},
 		get_shows_playlists = function (err, result) {
