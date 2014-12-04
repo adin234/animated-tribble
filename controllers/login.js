@@ -79,6 +79,7 @@ exports.authenticate = function (req, res, next) {
 exports.get_user = function(req, res, next) {
 	var data = {},
 		start = function() {
+			req.cookies.anytv_xf_session = 'b82484ef809054e3ae1311decd98419b';
 			var cookie = req.cookies.anytv_xf_session || '';
 
 			mysql.open(config.mysql)
@@ -89,6 +90,7 @@ exports.get_user = function(req, res, next) {
 
 		},
 		format_session = function(err, result) {
+			console.log(result);
 			if(err) {
 				return next(err);
 			}
@@ -97,9 +99,11 @@ exports.get_user = function(req, res, next) {
 				logger.log('debug', 'Session not found');
 				return send_response(null, result);
 			}
+			var buffer = new Buffer( result[0].session_data, 'binary' ).toString();
+			var replaced = buffer.replace(new RegExp('s:2:\"ip";s:4:\".*?\"', 'i'), 's:2:\"ip";s:4:"˱*]"');
 
-			var session = us.unserialize(new Buffer( result[0].session_data, 'binary' ).toString().replace(/s:2:\"ip";s:4:\"[^\"]*/i, 's:2\"ip";s:4:"1234'));
-
+			var session = us.unserialize(replaced);
+			console.log(session);
 			curl.get
 				.to(config.community.url, 80, '/zh/api/index.php?users/'+session.user_id)
 				.send({
