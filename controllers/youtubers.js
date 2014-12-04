@@ -611,6 +611,7 @@ exports.get_comments = function (req, res, next) {
 };
 
 exports.search = function (req, res, next) {
+    console.log(req.query.query)
     var data = {},
         cacheKey = 'youtubers.search.'+req.query.query,
         start = function (err, next) {
@@ -621,6 +622,68 @@ exports.search = function (req, res, next) {
                 console.log('From Cache');
                 return res.send(cache);
             }
+            mysql.open(config.mysql)
+                .query(
+                    "SELECT username, user_id FROM xf_user WHERE user_id \
+                        IN ( SELECT user_id \
+                             FROM xf_user_field_value \
+                             WHERE field_id = 'youtube_id' \
+                             AND field_value \
+                             IS NOT NULL and field_value <> '' \
+                       ) AND username LIKE ? \
+                    AND secondary_group_ids LIKE '%%6%%' \
+                    LIMIT 5",
+                    ['%%'+req.query.query+'%%'],
+                    send_response
+                ).end();
+        },
+        send_response = function (err, result) {
+            if(err) {
+                return next(err);
+            }
+            var suggest = [];
+            
+            result.forEach(function(item) {
+                suggest.push({value: item.username, data: item, typeid:'U'});
+            });
+            
+            var ggames = games.get_games(req, {
+                            send: function(item) {
+                                item.forEach(function(item, i){
+                                    if (item.name.indexOf(req.query.query) > -1) {
+                                        var gdata   = {gamename : item.name, game_id: item.id};
+                                        var gvalue  = item.name;
+                                        suggest.push({value: gvalue, data: gdata, typeid:'G'});
+                                        //console.log(gvalue + ' : ' + gdata);
+                                    }
+                                });
+                            }
+                        }, next);
+            ////console.log(ggames);
+
+            var data = {query: req.query.query, suggestions: suggest};
+            
+            util.set_cache(cacheKey, data);
+            
+            res.send(data);
+        };
+
+    start();
+}
+
+exports.search_youtubers = function (req, res, next) {
+    var data = {},
+        cacheKey = 'youtubers.search_youtubers'+req.query.query,
+        start = function (err, next) {
+            var cache = util.get_cache(cacheKey);
+
+            if(cache && typeof req.query.filter == 'undefined'
+              && typeof req.query.console == 'undefined') {
+                console.log('From Cache');
+                return res.send(cache);
+            }
+
+
 
             mysql.open(config.mysql)
                 .query(
@@ -644,8 +707,9 @@ exports.search = function (req, res, next) {
             var suggest = [];
 
             result.forEach(function(item) {
-                suggest.push({value: item.username, data: item});
+                suggest.push({value: item.username, data: item, typeid: 'U'});
             });
+    
 
             var data = {query: req.query.query, suggestions: suggest};
 
