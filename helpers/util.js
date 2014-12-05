@@ -123,17 +123,17 @@ exports.get_cache = function(key, callback) {
         || !Object.keys(cache).length) return false;
 
     return cache[key];
-}
+};
 
 exports.flush_cache = function(key, callback) {
     return myCache.flushAll();
-}
+};
 
 exports.save_access = function(data, callback, next) {
     mongo.collection('access_token')
         .remove(
             {
-                'access_token' : data.access_token
+                'user.user_id' : data.user.user_id
             },
             function(err, result) {
                 if (err) {
@@ -144,7 +144,7 @@ exports.save_access = function(data, callback, next) {
                     .insert(data, callback)
             }
         )
-}
+};
 
 exports.get_access = function(access, callback) {
     mongo.collection('access_token')
@@ -158,5 +158,5 @@ exports.get_access = function(access, callback) {
             }
 
             return callback(err, result);
-        })
-}
+        });
+};

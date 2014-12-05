@@ -103,10 +103,10 @@ exports.get_user = function(req, res, next) {
 			curl.get
 				.to(config.community.url, 80, '/zh/api/index.php?users/'+session.user_id)
 				.send({
-				}).then(send_response);
+				}).then(get_access);
 
 		},
-		send_response = function (err, result) {
+		get_access = function(err, result) {
 			if (err) {
 				logger.log('warn', 'Error getting the session');
 				return next(err);
@@ -126,7 +126,38 @@ exports.get_user = function(req, res, next) {
 				username: result.user.username
 			};
 
-			res.jsonp(data);
+
+			mongo.collection('access_token')
+				.findOne({
+					'user.user_id': result.user.user_id
+				}, function(err, _result) {
+					if(err) {
+						return next(err);
+					}
+
+					if(!_result) {
+						data.access_code = result.user.access_code = 'thisisnotarealaccesstoken';
+						return util.save_access(result, function(err, result) {
+							if(err) {
+								return next(err);
+							}
+
+							res.send(data);
+						}, next);
+					}
+
+					data.access_code = _result.user.access_code || '';
+
+					res.send(data);
+				})
+		}
+		send_response = function (err, result) {
+			if (err) {
+				logger.log('warn', 'Error getting the session');
+				return next(err);
+			}
+
+			res.jsonp(result);
 		};
 	start();
 }
