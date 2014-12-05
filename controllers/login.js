@@ -6,6 +6,8 @@ var config 			= require(__dirname + '/../config/config'),
     us         		= require(__dirname + '/../lib/unserialize'),
     mongo			= require(__dirname + '/../lib/mongoskin');
 
+
+
 exports.login = function (req, res, next) {
 	var data = {},
 		user,
@@ -36,44 +38,39 @@ exports.login = function (req, res, next) {
 				next(err);
 			}
 			var hashed = util.hash(data.access.access_token);
-			data.user = result.user
+			console.log(result);
+			data.user = result.user;
 			process.cache['access'] = process.cache['access'] || {};
 			process.cache['access'][hashed] = data;
 			result.user.access_code = hashed;
-			res.send(result.user);
+
+			util.save_access(data, function(err, _result) {
+				if(err) {
+					return next(err);
+				}
+
+				res.send(result.user);
+			}, next);
 		};
 	start();
 };
 
 exports.authenticate = function (req, res, next) {
-	var data = {},
-		user,
-		start = function() {
-			if(req.query.access && process.cache['access']
-				&& process.cache['access'][req.query.access]
-				&& process.cache['access'][req.query.access]['user']['user_id'] == req.query.user) {
-				return send_response(null, {
-					status: '200',
-					code: 'user_authenticated',
-					message: 'Successfully authenticated user'
-				});
-			}
-
-			return send_response({
+	util.get_access(req.query, function(err, result) {
+		if(err) {
+			return next({
 				status: '500',
 				code: 'user_not_authenticated',
 				message: 'Invalid Access Token Supplied'
-			}, []);
+			});
+		}
 
-		},
-		send_response = function (err, result) {
-			if(err) {
-				return next(err);
-			}
-
-			res.send(result);
-		};
-	start();
+		return res.send({
+			status: '200',
+			code: 'user_authenticated',
+			message: 'Successfully authenticated user'
+		});
+	});
 };
 
 exports.get_user = function(req, res, next) {

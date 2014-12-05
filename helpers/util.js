@@ -1,6 +1,7 @@
 var crypto = require('crypto'),
     NodeCache = require( "node-cache" ),
-    myCache = new NodeCache( { stdTTL: 600, checkperiod: 620 } );
+    myCache = new NodeCache( { stdTTL: 600, checkperiod: 620 } ),
+    mongo = require(__dirname + '/../lib/mongoskin');;
 
 /**
 	Utilities
@@ -128,3 +129,34 @@ exports.flush_cache = function(key, callback) {
     return myCache.flushAll();
 }
 
+exports.save_access = function(data, callback, next) {
+    mongo.collection('access_token')
+        .remove(
+            {
+                'access_token' : data.access_token
+            },
+            function(err, result) {
+                if (err) {
+                    return next(err);
+                }
+
+                mongo.collection('access_token')
+                    .insert(data, callback)
+            }
+        )
+}
+
+exports.get_access = function(access, callback) {
+    mongo.collection('access_token')
+        .findOne({
+            'user.access_code' : access.access
+        }, function(err, result) {
+            console.log(result);
+
+            if(!result || (!err && result.user.user_id != access.user)) {
+                return callback('not authenticated', {});
+            }
+
+            return callback(err, result);
+        })
+}
