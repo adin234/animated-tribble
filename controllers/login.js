@@ -136,7 +136,7 @@ exports.get_user = function(req, res, next) {
 					}
 
 					if(!_result) {
-						data.access_code = result.user.access_code = util.hash(util.random_string(5)+'thisisnotarealaccesstoken'));
+						data.access_code = result.user.access_code = util.hash(util.random_string(5)+'thisisnotarealaccesstoken');
 						return util.save_access(result, function(err, result) {
 							if(err) {
 								return next(err);
