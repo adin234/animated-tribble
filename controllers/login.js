@@ -142,13 +142,13 @@ exports.get_user = function(req, res, next) {
 								return next(err);
 							}
 
-							res.send(data);
+							res.jsonp(data);
 						}, next);
 					}
 
 					data.access_code = _result.user.access_code || '';
 
-					res.send(data);
+					res.jsonp(data);
 				})
 		}
 		send_response = function (err, result) {
