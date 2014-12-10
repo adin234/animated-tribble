@@ -230,7 +230,7 @@ exports.get_game_videos = function (req, res, next) {
 				get_videos(null, []);
 			} else {
 				var tags = result[0].tags.split(',').map(function(item) {
-					return new RegExp(item.trim(), 'i');
+					return item.trim();
 				});
 
 				if(req.query.featured) {
