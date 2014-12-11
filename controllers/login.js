@@ -169,11 +169,10 @@ exports.get_user = function(req, res, next) {
 				session = us.unserialize(buffer);
 			}
 
-			console.log('anytvsession ',config.community.url, 80, '/zh/api/index.php?users/'+session.user_id);
+			console.log('anytvsession ',config.community.url, 80, '/zh/api/index.php?users/'+session.user_id+'|');
 			curl.get
 				.to(config.community.url, 80, '/zh/api/index.php?users/'+session.user_id)
-				.send({
-				}).then(get_access);
+				.send().then(get_access);
 
 		},
 		get_access = function(err, result) {
