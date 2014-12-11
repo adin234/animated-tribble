@@ -108,7 +108,7 @@ exports.get_location = function(req, res, next) {
 				.send(tosend).then(show_data);
 		}
 		show_data = function(err, result) {
-			res.send(data.request.response_headers.location||req.query.link);
+			res.send((data.request.response_headers && data.request.response_headers.location )||req.query.link);
 		};
 	start();
 };
