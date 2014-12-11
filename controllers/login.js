@@ -89,10 +89,15 @@ exports.get_location = function(req, res, next) {
 			return data.request = curl.get
 				.to(host, 80, link)
 				.raw()
+				.set_allowable([200,301,304])
 				.send({
 				}).then(show_location);
 		},
 		show_location = function(err, result) {
+			if(err) {
+				return next(err);
+			}
+
 			var location 	= data.request.response_headers.location,
 				end			= location.split('/zh'),
 				host		= end[0].replace(/https?:\/\//, ''),
@@ -103,7 +108,7 @@ exports.get_location = function(req, res, next) {
 			link = link[0];
 			tosend[send] = null;
 
-			console.log('show location', req.query.link, host, link);
+			console.log('show location', req.query.link, host, link, tosend);
 			if(link === '/zhundefined') {
 				return res.send('http://'+host);
 			}
@@ -111,6 +116,7 @@ exports.get_location = function(req, res, next) {
 			return data.request = curl.get
 				.to(host, 80, link)
 				.raw()
+				.set_allowable([200,301,304])
 				.send(tosend)
 				.then(show_data);
 		}
@@ -163,7 +169,7 @@ exports.get_user = function(req, res, next) {
 				session = us.unserialize(buffer);
 			}
 
-			console.log(session);
+			console.log('anytvsession ',config.community.url, 80, '/zh/api/index.php?users/'+session.user_id);
 			curl.get
 				.to(config.community.url, 80, '/zh/api/index.php?users/'+session.user_id)
 				.send({
