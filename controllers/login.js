@@ -1,7 +1,7 @@
 var config 			= require(__dirname + '/../config/config'),
     util			= require(__dirname + '/../helpers/util'),
     mysql			= require(__dirname + '/../lib/mysql'),
-    curl			= require(__dirname + '/../lib/curl'),
+    curl			= require('cuddle'),
     logger         	= require(__dirname + '/../lib/logger')
     us         		= require(__dirname + '/../lib/unserialize'),
     mongo			= require(__dirname + '/../lib/mongoskin');
@@ -71,6 +71,46 @@ exports.authenticate = function (req, res, next) {
 			message: 'Successfully authenticated user'
 		});
 	});
+};
+
+exports.get_location = function(req, res, next) {
+	var data= {},
+		start = function() {
+			if(!req.query.link || !~req.query.link.indexOf('.gl')) {
+				res.send(req.query.link);
+			}
+
+			var end = req.query.link.split('.gl'),
+				host = (end[0]+'.gl').replace(/https?:\/\//, ''),
+				link = end[1];
+
+			data.request = curl.get
+				.to(host, 80, link)
+				.send({
+				}).then(show_location);
+		},
+		show_location = function(err, result) {
+			var location 	= data.request.response_headers.location,
+				end			= location.split('/zh'),
+				host		= end[0].replace(/https?:\/\//, ''),
+				link		= ('/zh'+end[1]).split('?'),
+				send		= link[1],
+				tosend		= {};
+
+			console.log(host, link, send, tosend)
+
+			link = link[0];
+			tosend[send] = null;
+
+
+			data.request = curl.get
+				.to(host, 80, link)
+				.send(tosend).then(show_data);
+		}
+		show_data = function(err, result) {
+			res.send(data.request.response_headers.location||req.query.link);
+		};
+	start();
 };
 
 exports.get_user = function(req, res, next) {
