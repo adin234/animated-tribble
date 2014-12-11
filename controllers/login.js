@@ -84,7 +84,7 @@ exports.get_location = function(req, res, next) {
 				host = (end[0]+'.gl').replace(/https?:\/\//, ''),
 				link = end[1];
 
-			data.request = curl.get
+			return data.request = curl.get
 				.to(host, 80, link)
 				.send({
 				}).then(show_location);
@@ -100,11 +100,16 @@ exports.get_location = function(req, res, next) {
 			link = link[0];
 			tosend[send] = null;
 
-			data.request = curl.get
+			return data.request = curl.get
 				.to(host, 80, link)
-				.send(tosend).then(show_data);
+				.send(tosend)
+				.then(show_data);
 		}
 		show_data = function(err, result) {
+			if(err) {
+				return next(err);
+			}
+
 			return res.send((data.request && data.request.response_headers && data.request.response_headers.location ) 
 				|| req.query.link );
 		};
