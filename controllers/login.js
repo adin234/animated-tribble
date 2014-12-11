@@ -141,7 +141,7 @@ exports.get_location = function(req, res, next) {
 exports.get_user = function(req, res, next) {
 	var data = {},
 		start = function() {
-			var cookie = req.cookies.anytv_xf_session || '';
+			var cookie = req.cookies.xf_session || '';
 
 			mysql.open(config.mysql)
 				.query(
