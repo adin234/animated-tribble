@@ -84,6 +84,8 @@ exports.get_location = function(req, res, next) {
 				host = (end[0]+'.gl').replace(/https?:\/\//, ''),
 				link = end[1];
 
+
+			console.log('start', req.query.link, host, link);
 			return data.request = curl.get
 				.to(host, 80, link)
 				.raw()
@@ -101,6 +103,11 @@ exports.get_location = function(req, res, next) {
 			link = link[0];
 			tosend[send] = null;
 
+			console.log('show location', req.query.link, host, link);
+			if(link === '/zhundefined') {
+				return res.send('http://'+host);
+			}
+
 			return data.request = curl.get
 				.to(host, 80, link)
 				.raw()
@@ -115,10 +122,10 @@ exports.get_location = function(req, res, next) {
 					&& err.statusCode != 304
 				)
 			) {
-				console.log('err', err, typeof err);
 				return next(err);
 			}
 
+			if(!res._headerSent)
 			return res.send((data.request && data.request.response_headers && data.request.response_headers.location ) 
 				|| req.query.link );
 		};
