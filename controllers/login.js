@@ -86,6 +86,7 @@ exports.get_location = function(req, res, next) {
 
 			return data.request = curl.get
 				.to(host, 80, link)
+				.raw()
 				.send({
 				}).then(show_location);
 		},
@@ -102,11 +103,19 @@ exports.get_location = function(req, res, next) {
 
 			return data.request = curl.get
 				.to(host, 80, link)
+				.raw()
 				.send(tosend)
 				.then(show_data);
 		}
 		show_data = function(err, result) {
-			if(err) {
+			if(err 
+				&& (
+					err.statusCode != 200 
+					&& err.statusCode != 301 
+					&& err.statusCode != 304
+				)
+			) {
+				console.log('err', err, typeof err);
 				return next(err);
 			}
 
