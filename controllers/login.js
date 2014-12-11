@@ -97,18 +97,15 @@ exports.get_location = function(req, res, next) {
 				send		= link[1],
 				tosend		= {};
 
-			console.log(host, link, send, tosend)
-
 			link = link[0];
 			tosend[send] = null;
-
 
 			data.request = curl.get
 				.to(host, 80, link)
 				.send(tosend).then(show_data);
 		}
 		show_data = function(err, result) {
-			res.send((data.request.response_headers && data.request.response_headers.location ) 
+			return res.send((data.request.response_headers && data.request.response_headers.location ) 
 				|| req.query.link );
 		};
 	start();
