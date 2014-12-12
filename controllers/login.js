@@ -121,10 +121,10 @@ exports.get_location = function(req, res, next) {
 				.then(show_data);
 		}
 		show_data = function(err, result) {
-			if(err 
+			if(err
 				&& (
-					err.statusCode != 200 
-					&& err.statusCode != 301 
+					err.statusCode != 200
+					&& err.statusCode != 301
 					&& err.statusCode != 304
 				)
 			) {
@@ -132,7 +132,7 @@ exports.get_location = function(req, res, next) {
 			}
 
 			if(!res._headerSent)
-			return res.send((data.request && data.request.response_headers && data.request.response_headers.location ) 
+			return res.send((data.request && data.request.response_headers && data.request.response_headers.location )
 				|| req.query.link );
 		};
 	start();
@@ -206,20 +206,22 @@ exports.get_user = function(req, res, next) {
 
 					if(!_result) {
 						data.access_code = result.user.access_code = util.hash(util.random_string(5)+'thisisnotarealaccesstoken');
-						return util.save_access(result, function(err, result) {
+						util.save_access(result, function(err, result) {
 							if(err) {
 								return next(err);
 							}
 
 							res.jsonp(data);
 						}, next);
+
+						return;
 					}
 
 					data.access_code = _result.user.access_code || '';
 
 					res.jsonp(data);
 				})
-		}
+		},
 		send_response = function (err, result) {
 			if (err) {
 				logger.log('warn', 'Error getting the session');
