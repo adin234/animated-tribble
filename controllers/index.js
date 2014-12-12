@@ -363,10 +363,11 @@ exports.get_index = function (req, res, next) {
 			// get_recent_threads(null, {});
 			mysql.open(config.mysql)
 				.query(
-					'select user_id, username \
+					'select xf_user.user_id, xf_user.username \
 					from xf_user \
-					where user_id in (select user_id from anytv_user_featured \
-					where active = 1 order by priority asc)',
+					inner join anytv_user_featured on xf_user.user_id = anytv_user_featured.user_id \
+					where anytv_user_featured.active = 1 \
+					order by anytv_user_featured.priority asc',
 					[],
 					get_recent_threads
 				).end();
