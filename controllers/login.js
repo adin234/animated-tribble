@@ -1,7 +1,7 @@
 var config 			= require(__dirname + '/../config/config'),
     util			= require(__dirname + '/../helpers/util'),
     mysql			= require(__dirname + '/../lib/mysql'),
-    curl			= require(__dirname + '/../lib/curl'),
+    curl			= require('cuddle'),
     logger         	= require(__dirname + '/../lib/logger')
     us         		= require(__dirname + '/../lib/unserialize'),
     mongo			= require(__dirname + '/../lib/mongoskin');
@@ -73,10 +73,75 @@ exports.authenticate = function (req, res, next) {
 	});
 };
 
+exports.get_location = function(req, res, next) {
+	var data= {},
+		start = function() {
+			if(!req.query.link || !~req.query.link.indexOf('.gl')) {
+				return res.send(req.query.link);
+			}
+
+			var end = req.query.link.split('.gl'),
+				host = (end[0]+'.gl').replace(/https?:\/\//, ''),
+				link = end[1];
+
+
+			console.log('start', req.query.link, host, link);
+			return data.request = curl.get
+				.to(host, 80, link)
+				.raw()
+				.set_allowable([200,301,304])
+				.send({
+				}).then(show_location);
+		},
+		show_location = function(err, result) {
+			if(err) {
+				return next(err);
+			}
+
+			var location 	= data.request.response_headers.location,
+				end			= location.split('/zh'),
+				host		= end[0].replace(/https?:\/\//, ''),
+				link		= ('/zh'+end[1]).split('?'),
+				send		= link[1],
+				tosend		= {};
+
+			link = link[0];
+			tosend[send] = null;
+
+			console.log('show location', req.query.link, host, link, tosend);
+			if(link === '/zhundefined') {
+				return res.send('http://'+host);
+			}
+
+			return data.request = curl.get
+				.to(host, 80, link)
+				.raw()
+				.set_allowable([200,301,304])
+				.send(tosend)
+				.then(show_data);
+		}
+		show_data = function(err, result) {
+			if(err 
+				&& (
+					err.statusCode != 200 
+					&& err.statusCode != 301 
+					&& err.statusCode != 304
+				)
+			) {
+				return next(err);
+			}
+
+			if(!res._headerSent)
+			return res.send((data.request && data.request.response_headers && data.request.response_headers.location ) 
+				|| req.query.link );
+		};
+	start();
+};
+
 exports.get_user = function(req, res, next) {
 	var data = {},
 		start = function() {
-			var cookie = req.cookies.anytv_xf_session || '';
+			var cookie = req.cookies.xf_session || '';
 
 			mysql.open(config.mysql)
 				.query(
@@ -104,11 +169,10 @@ exports.get_user = function(req, res, next) {
 				session = us.unserialize(buffer);
 			}
 
-			console.log(session);
+			console.log('anytvsession ',config.community.url, 80, '/zh/api/index.php?users/'+session.user_id+'|');
 			curl.get
 				.to(config.community.url, 80, '/zh/api/index.php?users/'+session.user_id)
-				.send({
-				}).then(get_access);
+				.send().then(get_access);
 
 		},
 		get_access = function(err, result) {
