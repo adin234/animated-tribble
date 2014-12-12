@@ -360,10 +360,13 @@ exports.get_index = function (req, res, next) {
 			}
 
 			data.most_viewed = result;
+			// get_recent_threads(null, {});
 			mysql.open(config.mysql)
 				.query(
-					'select * from anytv_user_featured \
-					where active = 1 order by priority asc',
+					'select user_id, username \
+					from xf_user \
+					where user_id in (select user_id from anytv_user_featured \
+					where active = 1 order by priority asc)',
 					[],
 					get_recent_threads
 				).end();
@@ -373,9 +376,7 @@ exports.get_index = function (req, res, next) {
 				return next(err);
 			}
 
-			data.featured_users = result.map(function(item, i) {
-				return item.user_id;
-			}).join(',');
+			data.featured_users = result;
 
 			mysql.open(config.mysql)
 					.query(
@@ -410,32 +411,21 @@ exports.get_index = function (req, res, next) {
 			delete data.countThreads;
 
 			data.threads = result;
-
-			mysql.open(config.mysql)
-				.query(
-					'select user_id, username \
-					from xf_user \
-					where user_id in ('+data.featured_users+')',
-					[],
-					function (err, result) {
-						data.featured_users = result;
-						if(!data.featured_games) {
-							return games.get_games(req, { send: function (item) {
-								data.games = item;
-								req.query.featured = 1;
-								games.get_games(req, {
-									send: function(item) {
-										data.featured_games = item;
-										delete req.query.featured;
-										that(null, data);
-									}
-								});
-							}}, next);
+			if(!data.featured_games) {
+				return games.get_games(req, { send: function (item) {
+					data.games = item;
+					req.query.featured = 1;
+					games.get_games(req, {
+						send: function(item) {
+							data.featured_games = item;
+							delete req.query.featured;
+							that(null, data);
 						}
+					});
+				}}, next);
+			}
 
-						that(null, data);
-					}
-				).end();
+			that(null, data);
 		},
 		send_response = function (err, result) {
 			if (err) {
