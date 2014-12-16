@@ -641,31 +641,29 @@ exports.search = function (req, res, next) {
                 return next(err);
             }
             var suggest = [];
-            
+
             result.forEach(function(item) {
                 suggest.push({value: item.username, data: item, typeid:'U'});
             });
             var qs = req.query.query;
-            
+
             var ggames = games.get_games(req, {
                             send: function(item) {
                                 item.forEach(function(item, i){
                                     if (item.name.indexOf(qs) > -1 ||
-                                        item.name.toUpperCase().indexOf(qs.toUpperCase()) > -1 ||
                                         item.name.toLowerCase().indexOf(qs.toLowerCase()) > -1) {
                                         var gdata   = {gamename : item.name, game_id: item.id};
                                         var gvalue  = item.name;
                                         suggest.push({value: gvalue, data: gdata, typeid:'G'});
-                                        console.log(item.name);
                                     }
                                 });
                             }
                         }, next);
 
             var data = {query: req.query.query, suggestions: suggest};
-            
+
             util.set_cache(cacheKey, data);
-            
+
             res.send(data);
         };
 
@@ -710,7 +708,7 @@ exports.search_youtubers = function (req, res, next) {
             result.forEach(function(item) {
                 suggest.push({value: item.username, data: item, typeid: 'U'});
             });
-    
+
 
             var data = {query: req.query.query, suggestions: suggest};
 
