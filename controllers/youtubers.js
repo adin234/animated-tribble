@@ -611,7 +611,6 @@ exports.get_comments = function (req, res, next) {
 };
 
 exports.search = function (req, res, next) {
-    console.log(req.query.query)
     var data = {},
         cacheKey = 'youtubers.search.'+req.query.query,
         start = function (err, next) {
@@ -659,7 +658,6 @@ exports.search = function (req, res, next) {
                                 });
                             }
                         }, next);
-            ////console.log(ggames);
 
             var data = {query: req.query.query, suggestions: suggest};
             
