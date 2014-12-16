@@ -25,7 +25,7 @@ exports.get_index = function (req, res, next) {
 					'SELECT option_value FROM EWRporta_options WHERE option_id = ?',
 					['recentnews_forum'],
 					get_feature_list
-				);
+				).end();
 		},
 		get_feature_list = function(err, result) {
 			if(err) {

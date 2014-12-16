@@ -33,7 +33,7 @@ exports.get_shows = function (req, res, next) {
 					) playlist LIMIT 1",
 					[],
 					get_shows_videos
-				);
+				).end();
 		},
 		get_playlist_videos = function (err, result) {
 			if(err) {
@@ -93,7 +93,7 @@ exports.get_shows = function (req, res, next) {
 					"SELECT option_id, option_value FROM xf_option WHERE option_id = 'ShowsCategories' LIMIT 1",
 					[],
 					format_response
-				);
+				).end();
 		},
 		format_response = function (err, result) {
 			if(err) {

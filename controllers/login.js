@@ -148,6 +148,7 @@ exports.get_user = function(req, res, next) {
 					'select session_data from xf_session where session_id = ?',
 					[cookie],
 					format_session)
+				.end();
 
 		},
 		format_session = function(err, result) {
