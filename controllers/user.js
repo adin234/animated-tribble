@@ -371,7 +371,7 @@ exports.get_user = function (req, res, next) {
 			}
 
 			if(!global.cache.user[req.params.id]) {
-				global.cache.user[req.params.id] = result[0];
+				global.cache.user[req.params.id] = result;
 			}
 
 			util.set_cache(cacheKey, result);
@@ -408,6 +408,8 @@ exports.get_youtuber_profile = function(req, res, next) {
 			if(err) {
 				return next(err);
 			}
+
+			console.log(result);
 
 			data.user = result;
 			data.config = {
