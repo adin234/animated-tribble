@@ -9,6 +9,7 @@ var config 			= require(__dirname + '/../config/config'),
 
 exports.get_games = function (req, res, next) {
 	var data = {},
+		data_featured_game = [],
 		user,
 		cacheKey = 'games.data',
 		gameConsole = {},
@@ -53,6 +54,7 @@ exports.get_games = function (req, res, next) {
 					where active = 1 order by priority asc',
 					[],
 					function(err, result) {
+						data_featured_game = result;
 						data = result.map(function(item, i) {
 							return item.game_id;
 						});
@@ -95,20 +97,38 @@ exports.get_games = function (req, res, next) {
 						? ~data.indexOf(values.game_id[i])
 						: 1)
 				) {
-					finalvalue.push({
-						id		: values.game_id[i],
-						consoles: gameConsole[values.game_id[i]],
-						name	: values.game_name[i],
-						image	: values.game_image[i],
-						chinese : values.game_chi[i],
-						sort	: values.sort[i]
-					});
+					if(req.query.featured) {
+						finalvalue.push({
+							id		: values.game_id[i],
+							consoles: gameConsole[values.game_id[i]],
+							name	: values.game_name[i],
+							image	: values.game_image[i],
+							chinese : values.game_chi[i],
+							sort	: values.sort[i],
+							priority: data_featured_game[data.indexOf(values.game_id[i])].priority
+						});
+					} else {
+						finalvalue.push({
+							id		: values.game_id[i],
+							consoles: gameConsole[values.game_id[i]],
+							name	: values.game_name[i],
+							image	: values.game_image[i],
+							chinese : values.game_chi[i],
+							sort	: values.sort[i]
+						});
+					}
 				}
 			}
 
-			finalvalue.sort(function(a, b) {
-				return a.sort - b.sort;
-			});
+			if(req.query.featured) {
+				finalvalue.sort(function(a, b) {
+					return a.priority - b.priority;
+				});
+			} else {
+				finalvalue.sort(function(a, b) {
+					return a.sort - b.sort;
+				});
+			}
 
 			return send_response(null, [finalvalue]);
 		},
