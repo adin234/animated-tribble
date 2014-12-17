@@ -97,7 +97,9 @@ exports.get_games = function (req, res, next) {
 						? ~data.indexOf(values.game_id[i])
 						: 1)
 				) {
-					if(req.query.featured) {
+					if(req.query.featured
+						&& ~data.indexOf(values.game_id[i])
+						&& data_featured_game.length) {
 						finalvalue.push({
 							id		: values.game_id[i],
 							consoles: gameConsole[values.game_id[i]],
