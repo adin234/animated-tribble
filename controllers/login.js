@@ -22,16 +22,22 @@ exports.login = function (req, res, next) {
 				}).then(get_user_data);
 		},
 		get_user_data = function (err, result) {
+			var tosend;
 			if(err) {
 				return next('Invalid Login');
 			}
 
 			data.access = result;
+
+			tosend = {
+				'users/me': null,
+				'oauth_token': result.access_token
+			}
+
 			curl.get
-				.to(config.community.url, 80, '/zh/api/index.php?users/me')
-				.send({
-					oauth_token: result.access_token
-				}).then(send_response);
+				.to(config.community.url, 80, '/zh/api/index.php')
+				.send(tosend)
+				.then(send_response);
 		},
 		send_response = function (err, result) {
 			if(err) {
