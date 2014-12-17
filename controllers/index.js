@@ -350,7 +350,7 @@ exports.get_index = function (req, res, next) {
 								.sort({
 									'snippet.meta.statistics.viewCount': -1
 								})
-								.limit(20)
+								.limit(60)
 								.toArray(get_featured_youtubers);
 					})
 				.end();
