@@ -193,8 +193,6 @@ exports.get_favorites = function (req, res, next) {
 				return next(err);
 			}
 			data.config = {};
-			data.config.channel = {};
-			data.config.playlist = {};
 
 			return mongo.collection('favorites')
 				.find({'user_id': userId})
