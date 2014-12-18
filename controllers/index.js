@@ -13,6 +13,7 @@ exports.get_index = function (req, res, next) {
 		date,
 		cacheKey = 'index.page',
 		start = function () {
+			cacheKey = cacheKey+req.query.console;
 			var cache = util.get_cache(cacheKey);
 
 			if(cache && typeof req.query.filter == 'undefined' && typeof req.query.console == 'undefined') {
@@ -349,7 +350,7 @@ exports.get_index = function (req, res, next) {
 								.sort({
 									'snippet.meta.statistics.viewCount': -1
 								})
-								.limit(20)
+								.limit(60)
 								.toArray(get_featured_youtubers);
 					})
 				.end();
