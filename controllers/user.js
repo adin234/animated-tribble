@@ -336,7 +336,7 @@ exports.get_user = function (req, res, next) {
 				+"</script>";
 
 			ads[1] = ""
-				+"<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>"
+				+"<script async src=\"//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js\"></script>"
 				+"<!-- GamersTMOfficial -->"
 				+"<ins class=\"adsbygoogle\""
 				+"     style=\"display:inline-block;width:300px;height:250px\""
