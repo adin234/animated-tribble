@@ -540,20 +540,29 @@ exports.get_youtubers = function (req, res, next) {
 
 exports.post_comment = function (req, res, next) {
     var data = {},
+        user = {},
         start = function (err, next) {
-            if(!req.body.user_id == process.cache.access[req.body.access_token]
-                .user.user_id) {
-                send_response('invalid token', []);
-            }
+            user.access = req.body.access_token;
+            user.user = req.body.user_id;
 
-            mysql.open(config.mysql)
-                .query(
-                    'INSERT INTO anytv_comments VALUES(NULL, ?, ?, ?, ?, ?)',
-                    [   req.body.user_id, req.body.username,
-                        req.params.id, req.body.message,
-                        parseInt((+new Date)/1000)],
-                    create_notification
-                ).end();
+            util.get_access(user, function(err, result) {
+                if(err) {
+                    return next({
+                        status: '500',
+                        code: 'user_not_authenticated',
+                        message: 'Invalid Access Token Supplied'
+                    });
+                }
+
+                 mysql.open(config.mysql)
+                    .query(
+                        'INSERT INTO anytv_comments VALUES(NULL, ?, ?, ?, ?, ?)',
+                        [   req.body.user_id, req.body.username,
+                            req.params.id, req.body.message,
+                            parseInt((+new Date)/1000)],
+                        create_notification
+                    ).end();
+            });
         },
         create_notification = function (err, result) {
             if(err) {
