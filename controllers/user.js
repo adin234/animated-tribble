@@ -344,7 +344,7 @@ exports.get_user = function (req, res, next) {
 
 			random = (Math.floor(Math.random() * 100) + 1);
 
-			data.custom_fields['advertisement'] = ads[1];//random%2 ? 1 : 0];
+			data.custom_fields['advertisement'] = ads[0];//random%2 ? 1 : 0];
 			data.custom_fields['advertisement_rand'] = random;
 		}
 
