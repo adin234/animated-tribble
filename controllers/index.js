@@ -19,6 +19,7 @@ exports.get_index = function (req, res, next) {
 			if(cache && typeof req.query.filter == 'undefined' && typeof req.query.console == 'undefined') {
 				console.log('From Cache');
 				return res.send(cache);
+				return;
 			}
 
 			mysql.open(config.mysql)
@@ -425,6 +426,7 @@ exports.get_index = function (req, res, next) {
 						}
 					});
 				}}, next);
+				return;
 			}
 
 			that(null, data);
@@ -457,6 +459,7 @@ exports.get_scrape = function (req, res, next) {
 			if(cache && typeof req.query.filter == 'undefined' && typeof req.query.console == 'undefined') {
 				console.log('From Cache');
 				return res.send(cache);
+				return;
 			}
 
 			return curl.get
