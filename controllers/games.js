@@ -8,7 +8,7 @@ var config 			= require(__dirname + '/../config/config'),
 
 
 exports.get_games = function (req, res, next) {
-	var data = {},
+	var data = [],
 		data_featured_game = [],
 		user,
 		cacheKey = 'games.data',
