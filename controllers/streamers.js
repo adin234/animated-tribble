@@ -305,7 +305,7 @@ exports.get_streamers = function (req, res, next) {
 			if(req.query.lanparty) {
 				join = 'INNER JOIN xf_user_group_relation ON \
 					xf_user_group_relation.user_id = xf_user.user_id';
-				where = ' AND xf_user_group_relation.user_group_id = 5 ORDER BY xf_user.user_id';
+				where = ' AND xf_user_group_relation.user_group_id = 5 ORDER BY xf_user.user_id ASC';
 			}
 
 			mysql.open(config.mysql)
