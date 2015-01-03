@@ -346,14 +346,34 @@ exports.get_streamers = function (req, res, next) {
 				item.field_id = new Buffer( item.field_id, 'binary' ).toString();
 			});
 
-			data.streamers = result;
+			mongo.collection('lan_party').find({}, function(err, result1) {
+				if(err) {
+					return next(err);
+				}
 
-			curl.get
-				.to('api.twitch.tv', 443, '/kraken/streams')
-				.secured()
-				.send({
-					channel: request.join(',')
-				}).then(format_response);
+				if(result1.length) {
+					var temp;
+					var twitch = result1[0].lanparty_twitch_channel || '';
+					twitch = twitch.trim()
+						.replace(/(http:\/\/)?(www.)?twitch\.tv\/?([a-zA-Z0-9_.]+)\/?/, '$3');
+
+					if(result.length) {
+						request.push(twitch);
+						temp = JSON.parse(JSON.stringify(result[0]));
+						temp.field_value = [twitch];
+						result.push(temp);
+					}
+				}
+
+				data.streamers = result;
+
+				curl.get
+					.to('api.twitch.tv', 443, '/kraken/streams')
+					.secured()
+					.send({
+						channel: request.join(',')
+					}).then(format_response);
+				});
 
 		},
 		format_response = function (err, result) {
