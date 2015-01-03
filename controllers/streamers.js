@@ -344,6 +344,9 @@ exports.get_streamers = function (req, res, next) {
 					request.push(value);
 					return value
 				});
+				console.log(item);
+
+				item.secondary_group_ids = new Buffer(item.secondary_group_ids, 'binary').toString();
 				item.field_id = new Buffer( item.field_id, 'binary' ).toString();
 			});
 
