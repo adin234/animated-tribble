@@ -305,14 +305,15 @@ exports.get_streamers = function (req, res, next) {
 			if(req.query.lanparty) {
 				join = 'INNER JOIN xf_user_group_relation ON \
 					xf_user_group_relation.user_id = xf_user.user_id';
-				where = ' AND xf_user_group_relation.user_group_id = 5 ORDER BY xf_user.user_id ASC';
+				where = ' AND xf_user_group_relation.user_group_id = 5';
 			}
 
 			mysql.open(config.mysql)
 				.query(
 					'SELECT * FROM xf_user_field_value INNER JOIN \
 					xf_user ON xf_user.user_id = xf_user_field_value.user_id \
-					'+join+' WHERE field_id = ? AND field_value != ""'+where,
+					'+join+' WHERE field_id = ? AND field_value != ""'+where
+					+'  ORDER BY xf_user.user_id ASC',
 					['twitchStreams'],
 					format_buffer
 				).end();
@@ -461,7 +462,7 @@ exports.get_streamers_data = function(req, res, next) {
 			exports.get_streamers(req, {
 				send: function(result) {
 					data.streamers = result.streamers;
-					get_videos(null, []);
+					send_response(null, data);
 				}
 			});
 		},
