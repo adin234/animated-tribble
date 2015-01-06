@@ -39,11 +39,16 @@ exports.get_youtube_streamers = function (req, res, next) {
 		start = function () {
 			cacheKey = req.query.lanparty ? cacheKey+'.lan' : cacheKey;
 			cacheKey += req.query.user;
-			var cache = util.get_cache(cacheKey);
+			var cache = util.get_cache(cacheKey+(req.query.user || '')),
+				where = '';
 
 			if(cache) {
 				console.log('From Cache');
 				return res.send(cache);
+			}
+
+			if(req.query.user) {
+				where = ' AND user.user_id = '+req.query.user
 			}
 
 			mysql.open(config.mysql)
@@ -53,7 +58,7 @@ exports.get_youtube_streamers = function (req, res, next) {
 					youtube.user_id = refresh.user_id  INNER \
 					JOIN xf_user user ON user.user_id = refresh.user_id \
 					WHERE youtube.field_id = \
-					"youtube_id" AND refresh.field_id = "refresh_token"',
+					"youtube_id" AND refresh.field_id = "refresh_token"' + where,
 					[],
 					get_token)
 				.end();
@@ -63,8 +68,10 @@ exports.get_youtube_streamers = function (req, res, next) {
 				console.log('error in getting the refresh');
 				return next(err);
 			}
+
 			result.forEach(function(user) {
 				if(user.field_value.trim().length && (req.query.user ? user.user_id == req.query.user : 1)) {
+					console.log('went in');
 					user.field_id = new Buffer( user.field_id, 'binary' )
 						.toString();
 					data[user.youtube] = { user: user }
