@@ -283,7 +283,7 @@ exports.get_data = function (req, res, next) {
                                 return (e.joinedAt.toYMD())
                                     .indexOf(now) === 0
                                     || (e.joinedAt.toYMD())
-                                    .indexOf(moment().format('YYYY-MM').subtract('month',1)) === 0;
+                                    .indexOf(moment().subtract(1, 'month').format('YYYY-MM')) === 0;
                             });
                             get_featured_games(null, []);
                         }
