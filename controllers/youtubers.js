@@ -4,7 +4,8 @@ var config          = require(__dirname + '/../config/config'),
     mysql           = require(__dirname + '/../lib/mysql'),
     logger          = require(__dirname + '/../lib/logger'),
     curl            = require(__dirname + '/../lib/curl'),
-    mongo           = require(__dirname + '/../lib/mongoskin');
+    mongo           = require(__dirname + '/../lib/mongoskin')
+    moment          = require('moment');
 
 exports.get_access = function(user, next) {
     console.log(user);
@@ -276,12 +277,13 @@ exports.get_data = function (req, res, next) {
                     //gets new youtubers
                     exports.get_youtubers(req, {
                         send: function(result) {
+                            console.log(result.length);
                             data.new_youtubers = result.filter(function(e) {
-                                date = new Date();
+                                var now = moment().format('YYYY-MM');
                                 return (e.joinedAt.toYMD())
-                                    .indexOf(date.getFullYear()+'-'+('000'+date.getMonth()).slice(-2)) === 0
+                                    .indexOf(now) === 0
                                     || (e.joinedAt.toYMD())
-                                    .indexOf(date.getFullYear()+'-'+('000'+(date.getMonth()-1)).slice(-2)) === 0;
+                                    .indexOf(now.subtract('month',1)) === 0;
                             });
                             get_featured_games(null, []);
                         }
