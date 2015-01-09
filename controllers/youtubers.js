@@ -597,10 +597,10 @@ exports.get_comments = function (req, res, next) {
         start = function (err, next) {
             var cache = util.get_cache(cacheKey);
 
-            if(cache && typeof req.query.filter == 'undefined' && typeof req.query.console == 'undefined') {
-                console.log('From Cache');
-                return res.send(cache);
-            }
+            // if(cache && typeof req.query.filter == 'undefined' && typeof req.query.console == 'undefined') {
+            //     console.log('From Cache');
+            //     return res.send(cache);
+            // }
 
             mysql.open(config.mysql)
                 .query(
