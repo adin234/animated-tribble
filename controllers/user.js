@@ -28,7 +28,7 @@ exports.fav_video = function(req, res, next) {
         get_videos = function() {
             videoId = req.params.videoId;
             if(!userId) {
-                return next({message: 'user not logged in'});
+                return res.jsonp({message: 'user not logged in'});
             }
 
             add_fav(null);
