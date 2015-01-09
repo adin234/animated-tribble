@@ -185,7 +185,7 @@ exports.get_user = function(req, res, next) {
 		get_access = function(err, result) {
 			if (err) {
 				logger.log('warn', 'Error getting the session');
-				return next(err);
+				return res.jsonp({message: 'Not logged in.'});
 			}
 
 			if(!result.user) {
