@@ -7,7 +7,7 @@ var loc			= __dirname + '/../controllers/',
 	shows 		= require(loc + 'shows'),
 	youtubers 	= require(loc + 'youtubers'),
 	streamers	= require(loc + 'streamers');
-	arrowchat	= require(loc + 'arrowchat');
+	// arrowchat	= require(loc + 'arrowchat');
 
 module.exports	= function (router, logger) {
 
@@ -29,6 +29,7 @@ module.exports	= function (router, logger) {
 	router.post('/login', login.login);
 	router.get('/logged_user', login.get_user);
 	router.get('/lan_party', youtubers.get_lan_party);
+	router.get('/freedom_activities', youtubers.get_freedom_activities);
 	router.get('/get_views/:twitch', streamers.get_views);
 	router.get('/index', index.get_index);
 	router.get('/flush', index.flush_cache);
@@ -64,7 +65,7 @@ module.exports	= function (router, logger) {
 		res.send('loaderio-37804bf004f92d92a8319891ded25d31');
 	});
 
-	router.post('/send_message', arrowchat.send_message);
+	// router.post('/send_message', arrowchat.send_message);
 
 	router.get('/vid_suggestions', youtubers.get_suggestions);
 	router.post('/batch/update', youtubers.update_videos);

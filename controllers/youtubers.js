@@ -136,6 +136,54 @@ exports.get_lan_party = function(req, res, next) {
     start();
 };
 
+exports.get_freedom_activities = function(req, res, next) {
+    var data = {},
+        cacheKey = 'freedomactivities',
+        start = function() {
+
+            var cache = util.get_cache(cacheKey);
+
+            if(cache) {
+                console.log('From Cache');
+                return res.send(cache);
+            }
+
+            mongo.collection('freedom_activities')
+                .find({'_id':'details'})
+                .toArray(get_videos);
+        },
+        get_videos = function(err, result) {
+            data = result[0];
+            console.log(result);
+            mongo.collection('fa_videos')
+                .find()
+                .toArray(get_playlists);
+        },
+        get_playlists = function(err, result) {
+            data.videos = result;
+            mongo.collection('fa_playlists')
+                .find()
+                .toArray(send_response);
+        },
+        send_response = function(err, result) {
+            channel = data.fa_channel.split('/').filter(function(e) {
+                return e;
+            });
+
+            data.playlists = result;
+            data.categories = [];
+            data.config = {
+                channel:    channel[channel.length-1],
+                playlist:   'UU'+channel[channel.length-1].substr(2)
+            }
+
+            util.set_cache(cacheKey, data);
+
+            res.send(data);
+        };
+    start();
+};
+
 exports.update_videos = function(req, res, next) {
     var data = {},
         start = function() {
