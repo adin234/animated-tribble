@@ -82,16 +82,31 @@ exports.get_news = function (req, res, next) {
 
 			return mongo.collection('newsPlaylists')
 				.find()
-				.toArray(get_categories);
+				.toArray(get_visible_playlists);
 
 		},
-		get_categories = function (err, result) {
+                                   get_visible_playlists = function (err, result) {
 			if (err) {
 				logger.log('warn', 'Error getting the twitch');
 				return next(err);
 			}
 
 			data.playlists = result;
+
+			return mysql.open(config.mysql)
+				.query(
+					"SELECT option_value FROM xf_option WHERE option_id = 'NewsChannelPlaylists' LIMIT 1",
+					[],
+					get_categories
+				).end();
+		},
+		get_categories = function (err, result) {
+			if (err) {
+				logger.log('warn', 'Error getting the visible playlists');
+				return next(err);
+			}
+
+			data.visible_playlists = new Buffer(result[0].option_value, 'binary').toString();
 
 			return mysql.open(config.mysql)
 				.query(
