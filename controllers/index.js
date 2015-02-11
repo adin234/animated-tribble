@@ -136,7 +136,7 @@ exports.get_index = function (req, res, next) {
 						inner join anytv_game_tags b on \
 						a.id = b.game_id \
 						left join anytv_game_featured c on \
-						a.id = c.game_id AND c.active = 1 \
+						a.id = c.game_id where c.active = 1 \
 						order by priority',
 						[],
 						filter_tags
@@ -149,6 +149,8 @@ exports.get_index = function (req, res, next) {
 			if(err) {
 				return next(err);
 			}
+
+			console.log(result[0]);
 
 			data.games = [];
 			data.games_ids = [];
