@@ -14,14 +14,11 @@ var config 			= require(__dirname + '/../config/config'),
 
  		start = function(){
 
- 					mysql.open(config.mysql)
-						.query(
-								'select * from freedom_events'
-						).end();	
-
-
+ 					mongo.collection('freedom_events')
+ 					.find();
+				 		
  		}
-
+ 		
  		start();
 };
 
