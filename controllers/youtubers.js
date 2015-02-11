@@ -4,7 +4,8 @@ var config          = require(__dirname + '/../config/config'),
     mysql           = require(__dirname + '/../lib/mysql'),
     logger          = require(__dirname + '/../lib/logger'),
     curl            = require(__dirname + '/../lib/curl'),
-    mongo           = require(__dirname + '/../lib/mongoskin');
+    mongo           = require(__dirname + '/../lib/mongoskin')
+    moment          = require('moment');
 
 exports.get_access = function(user, next) {
     console.log(user);
@@ -118,6 +119,54 @@ exports.get_lan_party = function(req, res, next) {
         },
         send_response = function(err, result) {
             channel = data.lanparty_channel.split('/').filter(function(e) {
+                return e;
+            });
+
+            data.playlists = result;
+            data.categories = [];
+            data.config = {
+                channel:    channel[channel.length-1],
+                playlist:   'UU'+channel[channel.length-1].substr(2)
+            }
+
+            util.set_cache(cacheKey, data);
+
+            res.send(data);
+        };
+    start();
+};
+
+exports.get_freedom_activities = function(req, res, next) {
+    var data = {},
+        cacheKey = 'freedomactivities',
+        start = function() {
+
+            var cache = util.get_cache(cacheKey);
+
+            if(cache) {
+                console.log('From Cache');
+                return res.send(cache);
+            }
+
+            mongo.collection('freedom_activities')
+                .find({'_id':'details'})
+                .toArray(get_videos);
+        },
+        get_videos = function(err, result) {
+            data = result[0];
+            console.log(result);
+            mongo.collection('fa_videos')
+                .find()
+                .toArray(get_playlists);
+        },
+        get_playlists = function(err, result) {
+            data.videos = result;
+            mongo.collection('fa_playlists')
+                .find()
+                .toArray(send_response);
+        },
+        send_response = function(err, result) {
+            channel = data.fa_channel.split('/').filter(function(e) {
                 return e;
             });
 
@@ -276,12 +325,13 @@ exports.get_data = function (req, res, next) {
                     //gets new youtubers
                     exports.get_youtubers(req, {
                         send: function(result) {
+                            console.log(result.length);
                             data.new_youtubers = result.filter(function(e) {
-                                date = new Date();
+                                var now = moment().format('YYYY-MM');
                                 return (e.joinedAt.toYMD())
-                                    .indexOf(date.getFullYear()+'-'+('000'+date.getMonth()).slice(-2)) === 0
+                                    .indexOf(now) === 0
                                     || (e.joinedAt.toYMD())
-                                    .indexOf(date.getFullYear()+'-'+('000'+(date.getMonth()-1)).slice(-2)) === 0;
+                                    .indexOf(moment().subtract(1, 'month').format('YYYY-MM')) === 0;
                             });
                             get_featured_games(null, []);
                         }
@@ -540,20 +590,29 @@ exports.get_youtubers = function (req, res, next) {
 
 exports.post_comment = function (req, res, next) {
     var data = {},
+        user = {},
         start = function (err, next) {
-            if(!req.body.user_id == process.cache.access[req.body.access_token]
-                .user.user_id) {
-                send_response('invalid token', []);
-            }
+            user.access = req.body.access_token;
+            user.user = req.body.user_id;
 
-            mysql.open(config.mysql)
-                .query(
-                    'INSERT INTO anytv_comments VALUES(NULL, ?, ?, ?, ?, ?)',
-                    [   req.body.user_id, req.body.username,
-                        req.params.id, req.body.message,
-                        parseInt((+new Date)/1000)],
-                    create_notification
-                ).end();
+            util.get_access(user, function(err, result) {
+                if(err) {
+                    return next({
+                        status: '500',
+                        code: 'user_not_authenticated',
+                        message: 'Invalid Access Token Supplied'
+                    });
+                }
+
+                 mysql.open(config.mysql)
+                    .query(
+                        'INSERT INTO anytv_comments VALUES(NULL, ?, ?, ?, ?, ?)',
+                        [   req.body.user_id, req.body.username,
+                            req.params.id, req.body.message,
+                            parseInt((+new Date)/1000)],
+                        create_notification
+                    ).end();
+            });
         },
         create_notification = function (err, result) {
             if(err) {
@@ -586,10 +645,10 @@ exports.get_comments = function (req, res, next) {
         start = function (err, next) {
             var cache = util.get_cache(cacheKey);
 
-            if(cache && typeof req.query.filter == 'undefined' && typeof req.query.console == 'undefined') {
-                console.log('From Cache');
-                return res.send(cache);
-            }
+            // if(cache && typeof req.query.filter == 'undefined' && typeof req.query.console == 'undefined') {
+            //     console.log('From Cache');
+            //     return res.send(cache);
+            // }
 
             mysql.open(config.mysql)
                 .query(
@@ -611,7 +670,6 @@ exports.get_comments = function (req, res, next) {
 };
 
 exports.search = function (req, res, next) {
-    console.log(req.query.query)
     var data = {},
         cacheKey = 'youtubers.search.'+req.query.query,
         start = function (err, next) {
@@ -642,29 +700,29 @@ exports.search = function (req, res, next) {
                 return next(err);
             }
             var suggest = [];
-            
+
             result.forEach(function(item) {
                 suggest.push({value: item.username, data: item, typeid:'U'});
             });
-            
+            var qs = req.query.query;
+
             var ggames = games.get_games(req, {
                             send: function(item) {
                                 item.forEach(function(item, i){
-                                    if (item.name.indexOf(req.query.query) > -1) {
+                                    if (item.name.indexOf(qs) > -1 ||
+                                        item.name.toLowerCase().indexOf(qs.toLowerCase()) > -1) {
                                         var gdata   = {gamename : item.name, game_id: item.id};
                                         var gvalue  = item.name;
                                         suggest.push({value: gvalue, data: gdata, typeid:'G'});
-                                        //console.log(gvalue + ' : ' + gdata);
                                     }
                                 });
                             } 
                         }, next);
-            ////console.log(ggames);
 
             var data = {query: req.query.query, suggestions: suggest};
-            
+
             util.set_cache(cacheKey, data);
-            
+
             res.send(data);
         };
 
@@ -709,7 +767,7 @@ exports.search_youtubers = function (req, res, next) {
             result.forEach(function(item) {
                 suggest.push({value: item.username, data: item, typeid: 'U'});
             });
-    
+
 
             var data = {query: req.query.query, suggestions: suggest};
 

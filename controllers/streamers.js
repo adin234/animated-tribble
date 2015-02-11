@@ -39,11 +39,16 @@ exports.get_youtube_streamers = function (req, res, next) {
 		start = function () {
 			cacheKey = req.query.lanparty ? cacheKey+'.lan' : cacheKey;
 			cacheKey += req.query.user;
-			var cache = util.get_cache(cacheKey);
+			var cache = util.get_cache(cacheKey+(req.query.user || '')),
+				where = '';
 
 			if(cache) {
 				console.log('From Cache');
 				return res.send(cache);
+			}
+
+			if(req.query.user) {
+				where = ' AND user.user_id = '+req.query.user
 			}
 
 			mysql.open(config.mysql)
@@ -53,7 +58,7 @@ exports.get_youtube_streamers = function (req, res, next) {
 					youtube.user_id = refresh.user_id  INNER \
 					JOIN xf_user user ON user.user_id = refresh.user_id \
 					WHERE youtube.field_id = \
-					"youtube_id" AND refresh.field_id = "refresh_token"',
+					"youtube_id" AND refresh.field_id = "refresh_token"' + where,
 					[],
 					get_token)
 				.end();
@@ -63,8 +68,10 @@ exports.get_youtube_streamers = function (req, res, next) {
 				console.log('error in getting the refresh');
 				return next(err);
 			}
+
 			result.forEach(function(user) {
 				if(user.field_value.trim().length && (req.query.user ? user.user_id == req.query.user : 1)) {
+					console.log('went in');
 					user.field_id = new Buffer( user.field_id, 'binary' )
 						.toString();
 					data[user.youtube] = { user: user }
@@ -312,7 +319,8 @@ exports.get_streamers = function (req, res, next) {
 				.query(
 					'SELECT * FROM xf_user_field_value INNER JOIN \
 					xf_user ON xf_user.user_id = xf_user_field_value.user_id \
-					'+join+' WHERE field_id = ? AND field_value != ""'+where,
+					'+join+' WHERE field_id = ? AND field_value != ""'+where
+					+'  ORDER BY xf_user.user_id ASC',
 					['twitchStreams'],
 					format_buffer
 				).end();
@@ -343,17 +351,42 @@ exports.get_streamers = function (req, res, next) {
 					request.push(value);
 					return value
 				});
+				console.log(item);
+
+				item.secondary_group_ids = new Buffer(item.secondary_group_ids, 'binary').toString();
 				item.field_id = new Buffer( item.field_id, 'binary' ).toString();
 			});
 
-			data.streamers = result;
+			mongo.collection('lan_party')
+				.find()
+				.toArray(function(err, result1) {
+					if(err) {
+						return next(err);
+					}
 
-			curl.get
-				.to('api.twitch.tv', 443, '/kraken/streams')
-				.secured()
-				.send({
-					channel: request.join(',')
-				}).then(format_response);
+					if(result1.length) {
+						var temp;
+						var twitch = result1[0].lanparty_twitch_channel || '';
+						twitch = twitch.trim()
+							.replace(/(http:\/\/)?(www.)?twitch\.tv\/?([a-zA-Z0-9_.]+)\/?/, '$3');
+
+						if(result.length) {
+							request.push(twitch);
+							temp = JSON.parse(JSON.stringify(result[0]));
+							temp.field_value = [twitch];
+							result.push(temp);
+						}
+					}
+
+					data.streamers = result;
+
+					curl.get
+						.to('api.twitch.tv', 443, '/kraken/streams')
+						.secured()
+						.send({
+							channel: request.join(',')
+						}).then(format_response);
+				});
 
 		},
 		format_response = function (err, result) {
@@ -439,7 +472,7 @@ exports.get_streamers_data = function(req, res, next) {
 			exports.get_streamers(req, {
 				send: function(result) {
 					data.streamers = result.streamers;
-					get_videos(null, []);
+					send_response(null, data);
 				}
 			});
 		},

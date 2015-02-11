@@ -13,11 +13,13 @@ exports.get_index = function (req, res, next) {
 		date,
 		cacheKey = 'index.page',
 		start = function () {
+			cacheKey = cacheKey+req.query.console;
 			var cache = util.get_cache(cacheKey);
 
 			if(cache && typeof req.query.filter == 'undefined' && typeof req.query.console == 'undefined') {
 				console.log('From Cache');
 				return res.send(cache);
+				return;
 			}
 
 			mysql.open(config.mysql)
@@ -25,7 +27,7 @@ exports.get_index = function (req, res, next) {
 					'SELECT option_value FROM EWRporta_options WHERE option_id = ?',
 					['recentnews_forum'],
 					get_feature_list
-				);
+				).end();
 		},
 		get_feature_list = function(err, result) {
 			if(err) {
@@ -291,7 +293,7 @@ exports.get_index = function (req, res, next) {
 							}
 						};
 
-						if(req.query.console) {
+						if(req.query.console && req.query.console !== 'all') {
 							where = {
 								$and : [
 									where,
@@ -349,7 +351,7 @@ exports.get_index = function (req, res, next) {
 								.sort({
 									'snippet.meta.statistics.viewCount': -1
 								})
-								.limit(20)
+								.limit(60)
 								.toArray(get_featured_youtubers);
 					})
 				.end();
@@ -424,6 +426,7 @@ exports.get_index = function (req, res, next) {
 						}
 					});
 				}}, next);
+				return;
 			}
 
 			that(null, data);
@@ -456,6 +459,7 @@ exports.get_scrape = function (req, res, next) {
 			if(cache && typeof req.query.filter == 'undefined' && typeof req.query.console == 'undefined') {
 				console.log('From Cache');
 				return res.send(cache);
+				return;
 			}
 
 			return curl.get

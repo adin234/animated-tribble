@@ -28,7 +28,7 @@ exports.fav_video = function(req, res, next) {
         get_videos = function() {
             videoId = req.params.videoId;
             if(!userId) {
-                return next({message: 'user not logged in'});
+                return res.jsonp({message: 'user not logged in'});
             }
 
             add_fav(null);
@@ -127,8 +127,6 @@ exports.get_favorite_ids = function (req, res, next) {
 				return next(err);
 			}
 			data.config = {};
-			data.config.channel = {};
-			data.config.playlist = {};
 
 			return mongo.collection('favorites')
 				.find({'user_id': userId})
@@ -195,8 +193,6 @@ exports.get_favorites = function (req, res, next) {
 				return next(err);
 			}
 			data.config = {};
-			data.config.channel = {};
-			data.config.playlist = {};
 
 			return mongo.collection('favorites')
 				.find({'user_id': userId})
@@ -263,7 +259,7 @@ exports.get_user = function (req, res, next) {
 			var cache = util.get_cache(cacheKey);
 
 			if(cache && typeof req.query.filter == 'undefined' && typeof req.query.console == 'undefined') {
-				console.log('From Cache');
+				//set_ads(cache);
 				return res.send(cache);
 			}
 
@@ -305,6 +301,7 @@ exports.get_user = function (req, res, next) {
 
 		fix_response_data = function (err, result) {
 			var custom_field_data = {};
+
 			result.forEach(function(item, i) {
 				var index = new Buffer( item.field_id, 'binary' ).toString();
 				if(index != 'refresh_token' && index != 'access_token') {
@@ -312,7 +309,18 @@ exports.get_user = function (req, res, next) {
 				}
 			});
 
-			custom_field_data['advertisement'] = ""
+			user.custom_fields = custom_field_data;
+
+			set_ads(user);
+
+			send_response(null, user);
+		},
+
+		set_ads = function (data) {
+			var ads = [],
+				random;
+
+			ads[0] = ""
 				+"<script async src=\"//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js\"></script>"
 				+"<!-- streamers adin -->"
 				+"<ins class=\"adsbygoogle\""
@@ -323,9 +331,22 @@ exports.get_user = function (req, res, next) {
 				+"(adsbygoogle = window.adsbygoogle || []).push({});"
 				+"</script>";
 
-			user.custom_fields = custom_field_data;
-			send_response(null, user);
-		},
+			ads[1] = ""
+				+"<script async src=\"//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js\"></script>"
+				+"<!-- GamersTMOfficial -->"
+				+"<ins class=\"adsbygoogle\""
+				+"     style=\"display:inline-block;width:300px;height:250px\""
+				+"     data-ad-client=\"ca-pub-2381401797122339\""
+				+"     data-ad-slot=\"2336224400\"></ins>"
+				+"<script>"
+				+"(adsbygoogle = window.adsbygoogle || []).push({});"
+				+"</script>"
+
+			random = (Math.floor(Math.random() * 100) + 1);
+
+			data.custom_fields['advertisement'] = ads[0];//random%2 ? 1 : 0];
+			data.custom_fields['advertisement_rand'] = random;
+		}
 
 		send_response = function (err, result) {
 			if (err) {
@@ -346,7 +367,7 @@ exports.get_user = function (req, res, next) {
 			}
 
 			if(!global.cache.user[req.params.id]) {
-				global.cache.user[req.params.id] = result[0];
+				global.cache.user[req.params.id] = result;
 			}
 
 			util.set_cache(cacheKey, result);
@@ -383,6 +404,8 @@ exports.get_youtuber_profile = function(req, res, next) {
 			if(err) {
 				return next(err);
 			}
+
+			console.log(result);
 
 			data.user = result;
 			data.config = {
