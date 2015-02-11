@@ -150,8 +150,6 @@ exports.get_index = function (req, res, next) {
 				return next(err);
 			}
 
-			console.log(result[0]);
-
 			data.games = [];
 			data.games_ids = [];
 			data.featured_games = [];
@@ -189,13 +187,14 @@ exports.get_index = function (req, res, next) {
 						data.games_tags = data.games_tags.concat(item.tags);
 					});
 
-					data.featured_games = [];
+					data.featured_games_final = [];
 					data.games = [];
 					item.forEach(function(item, i) {
 						if(~data.games_ids.indexOf(item.id)) {
 							data.games.push(item);
 							if(~data.featured_games_ids.indexOf(item.id)) {
-								data.featured_games.push(item);
+								data.featured_games_final
+									.push(data.featured_games[data.featured_games_ids.indexOf(item.id)]);
 							}
 						}
 					});
