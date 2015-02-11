@@ -295,7 +295,7 @@ exports.get_index = function (req, res, next) {
 							}
 						};
 
-						if(req.query.console) {
+						if(req.query.console && req.query.console !== 'all') {
 							where = {
 								$and : [
 									where,
