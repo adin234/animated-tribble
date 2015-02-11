@@ -23,6 +23,29 @@ exports.get_events = function (req, res, next) {
     start();
 };
 
+exports.search_events = function (req, res, next) {
+	
+    start = function () {
+        var keyword = req.params.keyword
+        var freedom_events = mongo.collection('fa_events');
+        if(freedom_events){
+            return freedom_events.find({name: keyword}).toArray(send_response);
+        }else{
+            send_response(true, null);
+        }
+    },
+    send_response = function (err, result) {
+        if (err) {
+            logger.log('warn', 'Error searching freedom events');
+            return next(err);
+        }
+
+        res.send(result);
+    };
+
+    start();
+};
+
 exports.add_event = function (req, res, next) {
 	
     start = function () {
