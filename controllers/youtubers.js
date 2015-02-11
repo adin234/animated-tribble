@@ -632,7 +632,7 @@ exports.search = function (req, res, next) {
                              IS NOT NULL and field_value <> '' \
                        ) AND username LIKE ? \
                     AND secondary_group_ids LIKE '%%6%%' \
-                    LIMIT 5",
+                    LIMIT 10",
                     ['%%'+req.query.query+'%%'],
                     send_response
                 ).end();
@@ -657,7 +657,7 @@ exports.search = function (req, res, next) {
                                         //console.log(gvalue + ' : ' + gdata);
                                     }
                                 });
-                            }
+                            } 
                         }, next);
             ////console.log(ggames);
 
@@ -693,7 +693,7 @@ exports.search_youtubers = function (req, res, next) {
                              WHERE field_id = 'youtube_id' \
                              AND field_value \
                              IS NOT NULL and field_value <> '' \
-                       ) AND username LIKE ? \
+                       ) AND username LIKE ? \                                    
                     AND secondary_group_ids LIKE '%%6%%' \
                     LIMIT 5",
                     ['%%'+req.query.query+'%%'],
