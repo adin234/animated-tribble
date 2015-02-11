@@ -6,6 +6,7 @@ var loc			= __dirname + '/../controllers/',
 	news 		= require(loc + 'news'),
 	shows 		= require(loc + 'shows'),
 	youtubers 	= require(loc + 'youtubers'),
+                  freedom_activities 	= require(loc + 'freedom_activities'),
 	streamers	= require(loc + 'streamers');
 	// arrowchat	= require(loc + 'arrowchat');
 
@@ -30,6 +31,10 @@ module.exports	= function (router, logger) {
 	router.get('/logged_user', login.get_user);
 	router.get('/lan_party', youtubers.get_lan_party);
 	router.get('/freedom_activities', youtubers.get_freedom_activities);
+                  router.get('/freedom_events', freedom_activities.get_events);
+                  router.post('/freedom_events/add', freedom_activities.add_event);
+                  router.get('/freedom_events/delete/:id', freedom_activities.delete_event);
+                  router.post('/freedom_events/update', freedom_activities.update_event);
 	router.get('/get_views/:twitch', streamers.get_views);
 	router.get('/index', index.get_index);
 	router.get('/flush', index.flush_cache);
