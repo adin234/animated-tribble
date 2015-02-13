@@ -115,6 +115,35 @@ exports.get_index = function (req, res, next) {
 					ORDER BY promote_date DESC \
 					LIMIT "+$options['recentfeatures_limit'],
 					[$options['recentfeatures_filename'], date, date],
+					get_visible_news_playlists
+				).end();
+		},
+                                   get_visible_news_playlists = function (err, result) {
+			if (err) {
+				return next(err);
+			}
+
+			data.slider = result;
+			delete data.forum;
+
+			return mysql.open(config.mysql)
+				.query(
+					"SELECT option_value FROM xf_option WHERE option_id = 'NewsChannelPlaylists' LIMIT 1",
+					[],
+					get_visible_shows_playlists
+				).end();
+		},
+                                   get_visible_shows_playlists = function (err, result) {
+			if (err) {
+				return next(err);
+			}
+
+			data.visible_news_playlists = new Buffer(result[0].option_value, 'binary').toString();
+
+			return mysql.open(config.mysql)
+				.query(
+					"SELECT option_value FROM xf_option WHERE option_id = 'ShowsChannelPlaylists' LIMIT 1",
+					[],
 					get_featured_games
 				).end();
 		},
@@ -123,8 +152,7 @@ exports.get_index = function (req, res, next) {
 				return next(err);
 			}
 
-			data.slider = result;
-			delete data.forum;
+			data.visible_shows_playlists = new Buffer(result[0].option_value, 'binary').toString();
 
 			if(req.query.console) {
 				return mysql.open(config.mysql)
