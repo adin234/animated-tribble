@@ -41,7 +41,7 @@ exports.get_shows = function (req, res, next) {
 			}
 
 			var request_data = {
-				part: 'snippet',
+				part: 'snippet,status',
 				playlistId: data.playlist,
 				key: config.youtube_key,
 				maxResults: 20
