@@ -144,15 +144,39 @@ exports.get_index = function (req, res, next) {
 				.query(
 					"SELECT option_value FROM xf_option WHERE option_id = 'ShowsChannelPlaylists' LIMIT 1",
 					[],
-					get_featured_games
+					get_news_playlists
 				).end();
+		},
+                                   get_news_playlists = function (err, result) {
+			if(err) {
+				return next(err);
+			}
+
+                                                     data.visible_shows_playlists = new Buffer(result[0].option_value, 'binary').toString();
+
+			return mongo.collection('newsPlaylists')
+				.find()
+				.toArray(get_shows_playlists);
+
+		},
+                                   get_shows_playlists = function (err, result) {
+			if(err) {
+				return next(err);
+			}
+
+			data.news_playlists = result;
+
+			return mongo.collection('showsPlaylists')
+				.find()
+				.toArray(get_featured_games);
+
 		},
 		get_featured_games = function (err, result) {
 			if(err) {
 				return next(err);
 			}
 
-			data.visible_shows_playlists = new Buffer(result[0].option_value, 'binary').toString();
+			data.shows_playlists = result;
 
 			if(req.query.console) {
 				return mysql.open(config.mysql)
