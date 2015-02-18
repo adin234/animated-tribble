@@ -168,15 +168,39 @@ exports.get_index = function (req, res, next) {
 
 			return mongo.collection('showsPlaylists')
 				.find()
-				.toArray(get_featured_games);
+				.toArray(get_news_videos);
 
+		},
+                                   get_news_videos = function (err, result) {
+			if(err) {
+				return next(err);
+			}
+			
+                                                    data.shows_playlists = result;
+
+			return mongo.collection('news')
+				.find()
+				.sort({'snippet.publishedAt': -1})
+				.toArray(get_shows_videos);
+		},
+                                   get_shows_videos = function (err, result) {
+			if(err) {
+				return next(err);
+			}
+			
+                                                    data.news_videos = result;
+
+			return mongo.collection('shows')
+				.find()
+				.sort({'snippet.publishedAt': -1})
+				.toArray(get_featured_games);
 		},
 		get_featured_games = function (err, result) {
 			if(err) {
 				return next(err);
 			}
 
-			data.shows_playlists = result;
+			data.shows_videos = result;
 
 			if(req.query.console) {
 				return mysql.open(config.mysql)
