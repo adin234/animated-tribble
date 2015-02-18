@@ -352,25 +352,53 @@ exports.get_index = function (req, res, next) {
 						data.featured_videos = result;
 
 						var today = new Date();
-						var yesterday = new Date();
-						yesterday.setDate(today.getDate()-1);
-						var minus2days = new Date();
-						minus2days.setDate(today.getDate()-2);
-						var minus3days = new Date();
-						minus3days.setDate(today.getDate()-3);
+						/* RDC : Removed 2015-02-18 : Select latest videos ordered by latest */
+						
+						//var yesterday = new Date();
+						//yesterday.setDate(today.getDate()-1);
+						//var minus2days = new Date();
+						//minus2days.setDate(today.getDate()-2);
+						//var minus3days = new Date();
+						//minus3days.setDate(today.getDate()-3);
+						
+						/* End */	
+						
+						var cYr = today.getFullYear.toString();
+						var cMo, cDy;
+						var paramDate = '';
+						
+						
+						if (today.getMonth.length === 1) {
+							cMo = "0" + today.getMonth.toString();
+						} else {
+							cMo = today.getMonth.toString();
+						}
+						
+						if (today.getDay.length === 1) {
+							cDy = "0" + today.getDay.toString();
+						} else {
+							cDy = today.getDay.toString();
+						}
+						
+						paramDate = cYr + '-' + cMo + '-' + cDy + 'T23:59:59.000Z';
+						console.log(paramDate);
 
 						var where = {
 							'snippet.publishedAt' : {
-								$in: [
-									new RegExp(today.toYMD()),
-									new RegExp(yesterday.toYMD()),
-									new RegExp(minus2days.toYMD()),
-									new RegExp(minus3days.toYMD())
-								]
+								/* RDC 2015-02-18 : Replaced condition */
+								//$in: [
+								//	new RegExp(today.toYMD()),
+								//	new RegExp(yesterday.toYMD()),
+								//	new RegExp(minus2days.toYMD()),
+								//	new RegExp(minus3days.toYMD())
+								//]
+								/* End */
+							$lte : paramDate
 							}
 						};
 
 						if(req.query.console && req.query.console !== 'all') {
+							console.log('Went here');
 							where = {
 								$and : [
 									where,
