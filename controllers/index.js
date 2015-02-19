@@ -381,7 +381,7 @@ exports.get_index = function (req, res, next) {
 						}
 						
 						paramDate = cYr + '-' + cMo + '-' + cDy + 'T23:59:59.000Z';
-						console.log(paramDate);
+						//console.log(paramDate);
 
 						var where = {
 							'snippet.publishedAt' : {
@@ -398,7 +398,7 @@ exports.get_index = function (req, res, next) {
 						};
 
 						if(req.query.console && req.query.console !== 'all') {
-							console.log('Went here');
+							//console.log('Went here');
 							where = {
 								$and : [
 									where,
@@ -413,6 +413,7 @@ exports.get_index = function (req, res, next) {
 
 						mongo.collection('videos')
 							.find(where)
+                                                                                                                           .limit( 54 )
 							.sort({
 								'snippet.publishedAt' : -1
 							})
