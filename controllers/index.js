@@ -362,26 +362,6 @@ exports.get_index = function (req, res, next) {
 						//minus3days.setDate(today.getDate()-3);
 						
 						/* End */	
-						
-						var cYr = today.getFullYear.toString();
-						var cMo, cDy;
-						var paramDate = '';
-						
-						
-						if (today.getMonth.length === 1) {
-							cMo = "0" + today.getMonth.toString();
-						} else {
-							cMo = today.getMonth.toString();
-						}
-						
-						if (today.getDay.length === 1) {
-							cDy = "0" + today.getDay.toString();
-						} else {
-							cDy = today.getDay.toString();
-						}
-						
-						paramDate = cYr + '-' + cMo + '-' + cDy + 'T23:59:59.000Z';
-						//console.log(paramDate);
 
 						var where = {
 							'snippet.publishedAt' : {
@@ -393,7 +373,7 @@ exports.get_index = function (req, res, next) {
 								//	new RegExp(minus3days.toYMD())
 								//]
 								/* End */
-							$lte : paramDate
+							$lte : today.toYMD()
 							}
 						};
 
@@ -413,7 +393,7 @@ exports.get_index = function (req, res, next) {
 
 						mongo.collection('videos')
 							.find(where)
-                                                                                                                           .limit( 54 )
+                            .limit( 54 )
 							.sort({
 								'snippet.publishedAt' : -1
 							})
