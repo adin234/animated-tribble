@@ -35,7 +35,7 @@ module.exports	= function (router, logger) {
                   router.get('/freedom_events/search/:keyword', freedom_activities.search_events);
                   router.post('/freedom_events/add', freedom_activities.add_event);
                   router.get('/freedom_events/delete/:id', freedom_activities.delete_event);
-                  router.post('/freedom_events/update', freedom_activities.update_event);
+            	 //router.post('/freedom_events/update', freedom_activities.update_event);
 	router.get('/get_views/:twitch', streamers.get_views);
 	router.get('/index', index.get_index);
 	router.get('/flush', index.flush_cache);

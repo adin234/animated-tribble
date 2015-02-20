@@ -1,5 +1,6 @@
 var logger = require(__dirname + '/../lib/logger')
       mongo = require(__dirname + '/../lib/mongoskin');
+ var bodyParser = require('body-parser');
 
 exports.get_events = function (req, res, next) {
 	
@@ -47,6 +48,7 @@ exports.search_events = function (req, res, next) {
 };
 
 exports.add_event = function (req, res, next) {
+
 	
     start = function () {
         var freedom_events = mongo.collection('fa_events');
@@ -97,26 +99,28 @@ exports.delete_event = function (req, res, next) {
 
 };
 
-exports.update_event = function (req, res, next) {
+exports.event_update = function (req, res) {
 	
-    start = function () {
-        var freedom_events = mongo.collection('fa_events');
-        if(freedom_events){
-            freedom_events.update(req.body, {}, function(){
-                send_response(false, 'event updated');
-            });
-        }else{
-            send_response(true, null);
-        }
-    },
-    send_response = function (err, result) {
-        if (err) {
-            logger.log('warn', 'Error updating freedom event');
-            return next(err);
-        }
+res.send(req.body);
+	
+    // start = function () {
+    //    var freedom_events = mongo.collection('fa_events');
+    //     if(freedom_events){
+    //         freedom_events.update(req.body, {}, function(){
+    //             send_response(false, 'event updated');
+    //         });
+    //     }else{
+    //         send_response(true, null);
+    //     }
+    // },
+    // send_response = function (err, result) {
+    //     if (err) {
+    //         logger.log('warn', 'Error updating freedom event');
+    //         return next(err);
+    //     }
 
-        res.send(result);
-    };
+    //     res.send(result);
+    // };
 
-    start();
+    // start();
 };
