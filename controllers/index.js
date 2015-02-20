@@ -230,6 +230,8 @@ exports.get_index = function (req, res, next) {
 			data.games_ids = [];
 			data.featured_games = [];
 			data.featured_games_ids = [];
+			
+			console.log('Filter tags');
 
 			for(var i=0; i < result.length; i++) {
 				result[i].platforms = result[i].platforms && result[i].platforms
@@ -393,7 +395,7 @@ exports.get_index = function (req, res, next) {
 
 						mongo.collection('videos')
 							.find(where)
-                            .limit( 54 )
+                            .limit(45)
 							.sort({
 								'snippet.publishedAt' : -1
 							})
