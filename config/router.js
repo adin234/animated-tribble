@@ -31,13 +31,16 @@ module.exports	= function (router, logger) {
 	router.get('/logged_user', login.get_user);
 	router.get('/lan_party', youtubers.get_lan_party);
 	router.get('/freedom_activities', youtubers.get_freedom_activities);
-                  router.get('/freedom_events', freedom_activities.get_events);
-                  router.get('/freedom_events/search/:keyword', freedom_activities.search_events);
-                  router.post('/freedom_events/add', freedom_activities.add_event);
-                  router.get('/freedom_events/delete/:id', freedom_activities.delete_event);
-            	 //router.post('/freedom_events/update', freedom_activities.update_event);
-	router.get('/get_views/:twitch', streamers.get_views);
-	router.get('/index', index.get_index);
+	router.get('/freedom_events', freedom_activities.get_events);
+	router.get('/freedom_events/search/:keyword', freedom_activities.search_events);
+	router.post('/freedom_events/add', freedom_activities.add_event);
+	router.get('/freedom_events/delete/:id', freedom_activities.delete_event);
+   //router.post('/freedom_events/update', freedom_activities.update_event);
+	/* RDC 2015-02-20 */
+	router.get('/gamesperconsole', index.getGamesPerConsole);
+	/* End */
+	router.get('/get_views/:twitch', streamers.get_views);-
+	router.get('/index', index.get_index);-
 	router.get('/flush', index.flush_cache);
 	router.get('/scrape/:twitch', index.get_scrape);
 	router.get('/user/:id', user.get_user);
