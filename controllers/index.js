@@ -516,9 +516,8 @@ exports.get_index = function (req, res, next) {
 				}}, next);
 				return;
 			}
-
 			that(null, data);
-		},
+		}
 		send_response = function (err, result) {
 			if (err) {
 				logger.log('warn', 'Error getting the index');
@@ -576,3 +575,142 @@ exports.flush_cache = function(req, res, next) {
 	}
 	res.send({'message': message});
 }
+
+exports.getGamesPerConsole = function(req, res, next) {
+	var gameList	  = [],
+		finalGameList = [],
+		cacheKey      = 'games.perconsole',
+	start = function() {
+		getGames();
+		var cache = util.get_cache(cacheKey);
+	},
+	getGames = function() {
+		mysql.open(config.mysql).query('call `asiafreedom`.`getgamesperconsole`;').end();
+		mysql.open(config.mysql).query('Select * From gamesperconsole', [], getValues).end();
+		
+	},
+	getValues = function(err, gamelist) {
+	   mysql.open(config.mysql)
+			.query("Select * From xf_option Where option_id = 'anytv_categories_categories'",
+				   [],
+				   function(err, result) {
+					   
+						result[0].option_id = new Buffer( result[0].option_id, 'binary' ).toString();
+						result[0].option_value = us.unserialize(new Buffer( result[0].option_value, 'binary' )
+								.toString());
+						result[0].default_value = new Buffer( result[0].default_value, 'binary' ).toString();
+						result[0].addon_id = new Buffer( result[0].addon_id, 'binary' ).toString();
+			
+						var values = result[0].option_value;
+						var finalvalue = [];
+						var gameInfo = {};
+						var gameImg	 = '';
+						
+						for(var gIdx = 0; gIdx < gamelist.length; gIdx++) {
+							
+							var hasInfo = false;
+							
+							switch (gamelist[gIdx].platforms) {
+								case 'pc' :
+									gameImg = './assets/images/game-logos/pc.jpg';
+									break;
+								case 'xbox1' :
+									gameImg = './assets/images/game-logos/xbox1.jpg';
+									break;
+								case 'xbox360' :
+									gameImg = './assets/images/game-logos/xbox360.jpg';
+									break;
+								case 'ps3' :
+									gameImg = './assets/images/game-logos/ps3.jpg';
+									break;
+								case 'ps4' :
+									gameImg = './assets/images/game-logos/ps4.jpg';
+									break;
+								case 'mobile_app' :
+									gameImg = './assets/images/game-logos/mobile.jpg';
+									break;
+								case 'vlogs' :
+									gameImg = './assets/images/game-logos/pc.jpg';
+									break;
+								default :
+									break;
+							}
+							
+							
+							for (var gInfo = 0; gInfo < values.game_id.length; gInfo++) {
+								if (gamelist[gIdx].id === values.game_id[gInfo]) {
+									finalvalue.push({id			: values.game_id[gInfo],
+													 consoles	: gamelist[gIdx].platforms,
+													 game		: values.game_name[gInfo].replace(/_/g, ' '),
+													 gamename	: values.game_name[gInfo].replace(/_/g, ' '),
+													 imgsrc		: values.game_image[gInfo],
+													 chinese	: values.game_chi[gInfo],
+													 sort		: values.sort[gInfo]
+													});
+									hasInfo = true;
+									break;
+								} else {
+									gameInfo = {id			: gamelist[gIdx].id,
+											    consoles	: gamelist[gIdx].platforms,
+												game		: gamelist[gIdx].id.replace(/_/g, ' '),
+												gamename	: gamelist[gIdx].id.replace(/_/g, ' '),
+												imgsrc		: gameImg,
+												chinese		: '',
+												sort		: '1000'
+												}
+								}
+							}
+							
+							if (hasInfo === false) {
+								finalvalue.push(gameInfo);
+							}
+						}
+					   sendResponse(err, finalvalue);
+					   
+				   }).end();
+	},
+	sendResponse = function(err, result) {
+		util.set_cache(cacheKey, result);
+		res.send(result);
+	}
+	
+	start();
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
