@@ -7,6 +7,8 @@ exports.get_events = function (req, res, next) {
     start = function () {
         var freedom_events = mongo.collection('fa_events');
         if(freedom_events){
+        	// var x = freedom_events.find().toArray(send_response);
+        	// console.log(x);
             return freedom_events.find().toArray(send_response);
         }else{
             send_response(true, null);
@@ -101,26 +103,26 @@ exports.delete_event = function (req, res, next) {
 
 exports.event_update = function (req, res) {
 	
-res.send(req.body);
+
 	
-    // start = function () {
-    //    var freedom_events = mongo.collection('fa_events');
-    //     if(freedom_events){
-    //         freedom_events.update(req.body, {}, function(){
-    //             send_response(false, 'event updated');
-    //         });
-    //     }else{
-    //         send_response(true, null);
-    //     }
-    // },
-    // send_response = function (err, result) {
-    //     if (err) {
-    //         logger.log('warn', 'Error updating freedom event');
-    //         return next(err);
-    //     }
+    start = function () {
+       var freedom_events = mongo.collection('fa_events');
+        if(freedom_events){
+            freedom_events.update(req.body, {}, function(){
+                send_response(false, 'event updated');
+            });
+        }else{
+            send_response(true, null);
+        }
+    },
+    send_response = function (err, result) {
+        if (err) {
+            logger.log('warn', 'Error updating freedom event');
+            return next(err);
+        }
 
-    //     res.send(result);
-    // };
+        res.send(result);
+    };
 
-    // start();
+    start();
 };
