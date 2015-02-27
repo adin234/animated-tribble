@@ -31,6 +31,29 @@ exports.get_views = function (req, res, next) {
 	start();
 };
 
+exports.get_hitbox_views = function (req, res, next) {
+    var data = {},
+        start = function () {
+            var hitbox = req.params.hitbox || false;
+            return curl.get
+                .to('api.hitbox.tv', 80, '/media/livestream/'+hitbox)
+                .send()
+                .then(send_response);
+        },
+        send_response = function (err, result) {
+            if(err) {
+                return next(err);
+            }
+
+            res.send({
+                stream: {
+                    viewers: result.livestream[0].media_views
+                }
+            });
+        };
+    start();
+};
+
 exports.get_youtube_streamers = function (req, res, next) {
 	var data = {},
 		user,
@@ -168,6 +191,91 @@ exports.get_youtube_streamers = function (req, res, next) {
 		};
 	start();
 };
+
+
+exports.get_hitbox_streamers = function (req, res, next) {
+	var data = {},
+		user,
+		index = 0,
+		cacheKey = 'streamers.hitbox',
+		start = function () {
+			cacheKey = req.query.lanparty ? cacheKey+'.lan' : cacheKey;
+			cacheKey += req.query.user;
+			var cache = util.get_cache(cacheKey+(req.query.user || '')),
+				where = '';
+
+			if(cache) {
+				console.log('From Cache');
+				return res.send(cache);
+			}
+
+			if(req.query.user) {
+				where = ' AND user.user_id = '+req.query.user
+			}
+
+			mysql.open(config.mysql)
+				.query('SELECT user.*, hitbox.* \
+					FROM xf_user_field_value hitbox INNER JOIN \
+						xf_user user ON user.user_id = hitbox.user_id \
+					WHERE hitbox.field_id = ?'+ where,
+					["hitbox"],
+					get_token)
+				.end();
+		},
+		get_token = function(err, result) {
+			if(err) {
+				console.log('error in getting the refresh');
+				return next(err);
+			}
+
+			result.forEach(function(user) {
+				if(user.field_value.trim().length && (req.query.user ? user.user_id == req.query.user : 1)) {
+					user.field_id = new Buffer( user.field_id, 'binary' )
+						.toString();
+					data[user.field_value] = { user: user }
+					index++;
+					curl.get
+						.to(
+							'api.hitbox.tv',
+							80,
+							'/media/live/' + user.field_value //channel
+						)
+						.send().then(update_status);
+				}
+			});
+		},
+		update_status = function( err, result) {
+			index--;
+			if(result && result.livestream.length) {
+				data[result.livestream[0].media_name].hitbox = result;
+			}
+			console.log('INDEX ', index);
+			if(index < 1) {
+				format_response(null, data);
+			}
+		},
+		format_response = function (err, result) {
+			response = {streamers: []};
+            for (var channel in result) {
+                response.streamers.push(result[channel]);
+            }
+			send_response(err, response);
+		},
+		send_response = function( err, result) {
+			if(err) {
+				console.log('there is an error');
+				return next(err);
+			}
+
+			console.log('will send result');
+
+			util.set_cache(cacheKey, result, 60);
+
+			res.send(result);
+		};
+	start();
+};
+
 
 exports.get_is_streaming = function (req, res, next) {
 var data = {},
