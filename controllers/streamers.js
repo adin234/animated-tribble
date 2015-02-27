@@ -266,9 +266,7 @@ exports.get_hitbox_streamers = function (req, res, next) {
             response = { streamers: []};
 
             for (var i in data) {
-                if (typeof data[i].hitbox !== 'undefined') {
-                    response.streamers.push(data[i]);
-                }
+                response.streamers.push(data[i]);
             }
 
 			send_response(err, response);
