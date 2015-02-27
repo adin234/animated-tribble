@@ -3,7 +3,8 @@ var config 			= require(__dirname + '/../config/config'),
     mysql			= require(__dirname + '/../lib/mysql'),
     games			= require(__dirname + '/games'),
     curl			= require(__dirname + '/../lib/curl'),
-    async           = require('async');
+    async           = require('async'),
+    superagent      = require('superagent'),
     logger         	= require(__dirname + '/../lib/logger');
 
 exports.get_views = function (req, res, next) {
@@ -239,22 +240,47 @@ exports.get_hitbox_streamers = function (req, res, next) {
 					data[user.field_value] = { user: user }
 					index++;
 					var fn = function(cb) {
-                        curl.get
-						.to(
-							'api.hitbox.tv',
-							80,
-							'/media/live/' + user.field_value //channel
-						)
-						.send().then(function(err, result) {
-                            if(!!result && 
-                                result.livestream.length &&
-                                parseInt(result.livestream[0].media_is_live)
-                            )
-                            {
-                                data[result.livestream[0].media_name].hitbox = result;
-                            }
-                            cb(null, result);
-                        });
+                        superagent
+                            .get('http://api.hitbox.tv/media/live/' + user.field_value)
+                            .send()
+                            .set('Accept', 'application/json')
+                            .end(function(err, res){
+                                result = res.body;
+
+                                if (typeof result !== 'undefined' && 
+                                    result.livestream.length &&
+                                    parseInt(result.livestream[0].media_is_live)
+                                )
+                                {
+                                    data[user.field_value].hitbox = result;
+                                }
+                                cb(null, result);
+                            });
+
+
+      //                   curl.get
+						// .to(
+						// 	'api.hitbox.tv',
+						// 	80,
+						// 	'/media/live/' + user.field_value //channel
+						// )
+						// .send().then(function(err, result) {
+      //                       if (typeof result === 'string') {
+      //                           console.log('test');
+      //                           result = JSON.parse(result);
+      //                       }
+
+      //                       if(!!result && 
+      //                           result.livestream.length &&
+      //                           parseInt(result.livestream[0].media_is_live)
+      //                       )
+      //                       {
+      //                           data[result.livestream[0].media_name].hitbox = result;
+      //                       }
+      //                       cb(null, result);
+      //                   });
+                        
+                        
                     };
                     q.push(fn);
 				}
@@ -266,7 +292,9 @@ exports.get_hitbox_streamers = function (req, res, next) {
             response = { streamers: []};
 
             for (var i in data) {
-                response.streamers.push(data[i]);
+                if (typeof data[i].hitbox !== 'undefined') {
+                    response.streamers.push(data[i]);
+                }
             }
 
 			send_response(err, response);
