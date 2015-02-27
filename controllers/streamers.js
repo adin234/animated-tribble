@@ -3,6 +3,7 @@ var config 			= require(__dirname + '/../config/config'),
     mysql			= require(__dirname + '/../lib/mysql'),
     games			= require(__dirname + '/games'),
     curl			= require(__dirname + '/../lib/curl'),
+    async           = require('async');
     logger         	= require(__dirname + '/../lib/logger');
 
 exports.get_views = function (req, res, next) {
@@ -199,19 +200,20 @@ exports.get_hitbox_streamers = function (req, res, next) {
 		index = 0,
 		cacheKey = 'streamers.hitbox',
 		start = function () {
-			cacheKey = req.query.lanparty ? cacheKey+'.lan' : cacheKey;
-			cacheKey += req.query.user;
-			var cache = util.get_cache(cacheKey+(req.query.user || '')),
-				where = '';
+            cacheKey = req.query.lanparty ? cacheKey+'.lan' : cacheKey;
+            cacheKey += req.query.user;
+            var cache = util.get_cache(cacheKey+(req.query.user || '')),
+                where = '';
 
-			if(cache) {
-				console.log('From Cache');
-				return res.send(cache);
-			}
 
-			if(req.query.user) {
-				where = ' AND user.user_id = '+req.query.user
-			}
+            if(cache) {
+                console.log('From Cache');
+                return res.send(cache);
+            }
+
+            if(req.query.user) {
+                where = ' AND user.user_id = '+req.query.user
+            }
 
 			mysql.open(config.mysql)
 				.query('SELECT user.*, hitbox.* \
@@ -223,6 +225,8 @@ exports.get_hitbox_streamers = function (req, res, next) {
 				.end();
 		},
 		get_token = function(err, result) {
+            var q = [];
+
 			if(err) {
 				console.log('error in getting the refresh');
 				return next(err);
@@ -234,34 +238,39 @@ exports.get_hitbox_streamers = function (req, res, next) {
 						.toString();
 					data[user.field_value] = { user: user }
 					index++;
-					curl.get
+					var fn = function(cb) {
+                        curl.get
 						.to(
 							'api.hitbox.tv',
 							80,
 							'/media/live/' + user.field_value //channel
 						)
-						.send().then(update_status);
+						.send().then(function(err, result) {
+                            if(!!result && 
+                                result.livestream.length &&
+                                parseInt(result.livestream[0].media_is_live)
+                            )
+                            {
+                                data[result.livestream[0].media_name].hitbox = result;
+                            }
+                            cb(null, result);
+                        });
+                    };
+                    q.push(fn);
 				}
 			});
+
+            async.parallel(q, format_response);
 		},
-		update_status = function( err, result) {
-			index--;
-			if(result && result.livestream.length) {
-				data[result.livestream[0].media_name].hitbox = result;
-			}
-			console.log('INDEX ', index);
-			if(index < 1) {
-				format_response(null, data);
-			}
-		},
-		format_response = function (err, result) {
-			response = {streamers: []};
-            for (var channel in result) {
-                var hitbox = result[channel].hitbox;
-                if (typeof hitbox && parseInt(hitbox.livestream[0].media_is_live)) {
-                    response.streamers.push(result[channel]);
+		format_response = function (err, results) {
+            response = { streamers: []};
+
+            for (var i in data) {
+                if (typeof data[i].hitbox !== 'undefined') {
+                    response.streamers.push(data[i]);
                 }
             }
+
 			send_response(err, response);
 		},
 		send_response = function( err, result) {
