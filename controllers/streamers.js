@@ -257,7 +257,10 @@ exports.get_hitbox_streamers = function (req, res, next) {
 		format_response = function (err, result) {
 			response = {streamers: []};
             for (var channel in result) {
-                response.streamers.push(result[channel]);
+                var hitbox = result[channel].hitbox;
+                if (typeof hitbox && parseInt(hitbox.livestream[0].media_is_live)) {
+                    response.streamers.push(result[channel]);
+                }
             }
 			send_response(err, response);
 		},
