@@ -40,12 +40,14 @@ module.exports	= function (router, logger) {
 	router.get('/gamesperconsole', index.getGamesPerConsole);
 	/* End */
 	router.get('/get_views/:twitch', streamers.get_views);-
+	router.get('/get_hitbox_views/:hitbox', streamers.get_hitbox_views);-
 	router.get('/index', index.get_index);-
 	router.get('/flush', index.flush_cache);
 	router.get('/scrape/:twitch', index.get_scrape);
 	router.get('/user/:id', user.get_user);
 	router.get('/streamers', streamers.get_streamers);
 	router.get('/streamers/youtube', streamers.get_youtube_streamers);
+	router.get('/streamers/hitbox', streamers.get_hitbox_streamers);
 	router.get('/streamersdata', streamers.get_streamers_data);
 	router.get('/streaming/:twitch/:youtube', streamers.get_is_streaming);
 	router.get('/youtubers', youtubers.get_data);

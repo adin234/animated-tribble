@@ -3,6 +3,8 @@ var config 			= require(__dirname + '/../config/config'),
     mysql			= require(__dirname + '/../lib/mysql'),
     games			= require(__dirname + '/games'),
     curl			= require(__dirname + '/../lib/curl'),
+    async           = require('async'),
+    superagent      = require('superagent'),
     logger         	= require(__dirname + '/../lib/logger');
 
 exports.get_views = function (req, res, next) {
@@ -29,6 +31,29 @@ exports.get_views = function (req, res, next) {
 			res.send(result);
 		};
 	start();
+};
+
+exports.get_hitbox_views = function (req, res, next) {
+    var data = {},
+        start = function () {
+            var hitbox = req.params.hitbox || false;
+            return curl.get
+                .to('api.hitbox.tv', 80, '/media/livestream/'+hitbox)
+                .send()
+                .then(send_response);
+        },
+        send_response = function (err, result) {
+            if(err) {
+                return next(err);
+            }
+
+            res.send({
+                stream: {
+                    viewers: result.livestream[0].media_views
+                }
+            });
+        };
+    start();
 };
 
 exports.get_youtube_streamers = function (req, res, next) {
@@ -168,6 +193,127 @@ exports.get_youtube_streamers = function (req, res, next) {
 		};
 	start();
 };
+
+
+exports.get_hitbox_streamers = function (req, res, next) {
+	var data = {},
+		user,
+		index = 0,
+		cacheKey = 'streamers.hitbox',
+		start = function () {
+            cacheKey = req.query.lanparty ? cacheKey+'.lan' : cacheKey;
+            cacheKey += req.query.user;
+            var cache = util.get_cache(cacheKey+(req.query.user || '')),
+                where = '';
+
+
+            if(cache) {
+                console.log('From Cache');
+                return res.send(cache);
+            }
+
+            if(req.query.user) {
+                where = ' AND user.user_id = '+req.query.user
+            }
+
+			mysql.open(config.mysql)
+				.query('SELECT user.*, hitbox.* \
+					FROM xf_user_field_value hitbox INNER JOIN \
+						xf_user user ON user.user_id = hitbox.user_id \
+					WHERE hitbox.field_id = ?'+ where,
+					["hitbox"],
+					get_token)
+				.end();
+		},
+		get_token = function(err, result) {
+            var q = [];
+
+			if(err) {
+				console.log('error in getting the refresh');
+				return next(err);
+			}
+
+			result.forEach(function(user) {
+				if(user.field_value.trim().length && (req.query.user ? user.user_id == req.query.user : 1)) {
+					user.field_id = new Buffer( user.field_id, 'binary' )
+						.toString();
+					data[user.field_value] = { user: user }
+					index++;
+					var fn = function(cb) {
+                        superagent
+                            .get('http://api.hitbox.tv/media/live/' + user.field_value)
+                            .send()
+                            .set('Accept', 'application/json')
+                            .end(function(err, res){
+                                result = res.body;
+
+                                if (typeof result !== 'undefined' && 
+                                    result.livestream.length &&
+                                    parseInt(result.livestream[0].media_is_live)
+                                )
+                                {
+                                    data[user.field_value].hitbox = result;
+                                }
+                                cb(null, result);
+                            });
+
+
+      //                   curl.get
+						// .to(
+						// 	'api.hitbox.tv',
+						// 	80,
+						// 	'/media/live/' + user.field_value //channel
+						// )
+						// .send().then(function(err, result) {
+      //                       if (typeof result === 'string') {
+      //                           console.log('test');
+      //                           result = JSON.parse(result);
+      //                       }
+
+      //                       if(!!result && 
+      //                           result.livestream.length &&
+      //                           parseInt(result.livestream[0].media_is_live)
+      //                       )
+      //                       {
+      //                           data[result.livestream[0].media_name].hitbox = result;
+      //                       }
+      //                       cb(null, result);
+      //                   });
+                        
+                        
+                    };
+                    q.push(fn);
+				}
+			});
+
+            async.parallel(q, format_response);
+		},
+		format_response = function (err, results) {
+            response = { streamers: []};
+
+            for (var i in data) {
+                if (typeof data[i].hitbox !== 'undefined') {
+                    response.streamers.push(data[i]);
+                }
+            }
+
+			send_response(err, response);
+		},
+		send_response = function( err, result) {
+			if(err) {
+				console.log('there is an error');
+				return next(err);
+			}
+
+			console.log('will send result');
+
+			util.set_cache(cacheKey, result, 60);
+
+			res.send(result);
+		};
+	start();
+};
+
 
 exports.get_is_streaming = function (req, res, next) {
 var data = {},
