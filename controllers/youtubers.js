@@ -84,7 +84,7 @@ exports.get_suggestions = function(req, res, next) {
 
             //return array of suggested videos
             res.send(result);
-        }
+        };
 
     start();
 };
