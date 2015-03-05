@@ -596,10 +596,11 @@ exports.get_youtubers = function (req, res, next) {
 exports.post_comment = function (req, res, next) {
     var data = {},
         user = {},
+        comment_id = 0,
+        video_owner_id = 18, //TODO: Change dynamically
         start = function (err, next) {
             user.access = req.body.access_token;
             user.user = req.body.user_id;
-
             util.get_access(user, function(err, result) {
                 if(err) {
                     return next({
@@ -623,15 +624,22 @@ exports.post_comment = function (req, res, next) {
             if(err) {
                 return next(err);
             }
-
             mysql.open(config.mysql)
                 .query(
-                    'INSERT INTO xf_news_feed VALUES(NULL, ?, ?, \
-                        \'anytv-comment\', ?, \'insert\', ?, "")',
-                    [   req.body.user_id, req.body.username,
-                        req.params.id, parseInt((+new Date)/1000)],
+                    'INSERT INTO xf_user_alert VALUES(NULL, ?, ?, ?, \
+                        \'anytvcomment\', ?, \'insert\', ?, 0, "")',
+                    [   video_owner_id, req.body.user_id, req.body.username,
+                        result.insertId, parseInt((+new Date)/1000)],
                     send_response
                 ).end();
+            /*mysql.open(config.mysql)
+                .query(
+                    'INSERT INTO xf_news_feed VALUES(NULL, ?, ?, \
+                        \'anytvcomment\', ?, \'insert\', ?, "")',
+                    [   req.body.user_id, req.body.username,
+                        result.insertId, parseInt((+new Date)/1000)],
+                    send_response
+                ).end();*/
         },
         send_response = function (err, result) {
             if(err) {
