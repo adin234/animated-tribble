@@ -145,7 +145,7 @@ exports.get_youtube_streamers = function (req, res, next) {
 			if(result && result.items && result.items.length) {
 				data[result.items[0].snippet.channelId].streams = result;
 			}
-			console.log('INDEX ', index);
+			//console.log('INDEX ', index);
 			if(index < 1) {
 				format_response(null, data);
 			}
@@ -154,7 +154,7 @@ exports.get_youtube_streamers = function (req, res, next) {
 			response = {streamers: []};
 			for(i in result) {
 				item = result[i];
-				console.log('streamas', item.streams)
+				//console.log('streamas', item.streams)
 				if(item.streams) {
 					item.streams.items.forEach(function(iitem) {
 						var topush = JSON

@@ -1,6 +1,7 @@
 var config          = require(__dirname + '/../config/config'),
     util            = require(__dirname + '/../helpers/util'),
     games           = require(__dirname + '/games'),
+    login           = require(__dirname + '/login'),
     mysql           = require(__dirname + '/../lib/mysql'),
     logger          = require(__dirname + '/../lib/logger'),
     curl            = require(__dirname + '/../lib/curl'),
@@ -83,7 +84,7 @@ exports.get_suggestions = function(req, res, next) {
 
             //return array of suggested videos
             res.send(result);
-        }
+        };
 
     start();
 };
@@ -540,6 +541,10 @@ exports.get_youtubers = function (req, res, next) {
                 .toArray(bind_video);
         },
         bind_video = function(err, result) {
+            if (err) {
+                return next(err);
+            }
+
             var previous_youtube_id = '';
 
             users = [];
@@ -584,7 +589,7 @@ exports.get_youtubers = function (req, res, next) {
             }
 
             res.send(result);
-        };;
+        };
     start();
 };
 
@@ -778,3 +783,66 @@ exports.search_youtubers = function (req, res, next) {
 
     start();
 }
+exports.delete_comment = function(req, res, next){
+    console.log(req.params.id+'----'+req.body.comment_id+'----'+req.body.user_id);
+    var data = {},
+        cacheKey = 'youtubers.user.'+req.params.id,
+        start = function (err, next) {
+            var cache = util.get_cache(cacheKey);
+
+            login.get_user(req, {
+                jsonp : delete_comment
+            }, next);
+        },
+
+        delete_comment = function (user) {
+            data.user_id = user.user_id;
+
+            return __delete_comment(data.user_id);
+        },
+
+        _delete_comment = function (err, result) {
+            if (err) {
+                return next(err);
+            }
+
+            if(result.user_id === data.user_id) {
+                __delete_comment();
+            }
+        },
+
+        __delete_comment = function(user_id) {
+            var params = [
+                req.params.id,
+                req.params.comment_id
+            ];
+
+            if (user_id) {
+                params.push(user_id);
+            }
+
+            return mysql.open(config.mysql)
+                    .query(
+                        'DELETE FROM anytv_comments WHERE video_id = ? AND comment_id = ? '
+                            + (user_id ? 'AND user_id = ?' : '')
+                            +' LIMIT 1',
+                        params,
+                        send_response
+                    ).end();
+        },
+
+        send_response = function (err, result) {
+            if(err) {
+                return next(err);
+            }
+
+            mongo.collection('videos')
+                .findOne({
+                    'snippet.resourceId.videoId' : req.params.id
+                }, { user_id : 1 }, _delete_comment);
+
+            util.set_cache(cacheKey, result);
+            res.send(result);
+        };
+    start();
+};
