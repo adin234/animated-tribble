@@ -639,14 +639,18 @@ exports.post_comment = function (req, res, next) {
             if(err) {
                 return next(err);
             }
-            mysql.open(config.mysql)
-                .query(
-                    'INSERT INTO xf_user_alert VALUES(NULL, ?, ?, ?, \
-                        \'anytvcomment\', ?, \'insert\', ?, 0, "")',
-                    [   video_owner_id, req.body.user_id, req.body.username,
-                        result.insertId, parseInt((+new Date)/1000)],
-                    send_response
-                ).end();
+            if(video_owner_id != req.body.user_id) {
+                mysql.open(config.mysql)
+                    .query(
+                        'INSERT INTO xf_user_alert VALUES(NULL, ?, ?, ?, \
+                            \'anytvcomment\', ?, \'insert\', ?, 0, "")',
+                        [   video_owner_id, req.body.user_id, req.body.username,
+                            result.insertId, parseInt((+new Date)/1000)],
+                        send_response
+                    ).end();
+                } else {
+                    send_response();
+                }
         },
         send_response = function (err, result) {
             if(err) {
