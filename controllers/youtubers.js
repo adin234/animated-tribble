@@ -613,7 +613,7 @@ exports.post_comment = function (req, res, next) {
             }
 
             mongo.collection('videos').find({
-                "snippet.resourceId.videoId": "ek3mG896PoE"
+                "snippet.resourceId.videoId": req.params.id
             }, {
                 user_id:1,
                 _id:0
