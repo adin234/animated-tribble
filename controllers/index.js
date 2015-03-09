@@ -175,7 +175,7 @@ exports.get_index = function (req, res, next) {
 			if(err) {
 				return next(err);
 			}
-			
+
                                                     data.shows_playlists = result;
 
 			return mongo.collection('news')
@@ -187,7 +187,7 @@ exports.get_index = function (req, res, next) {
 			if(err) {
 				return next(err);
 			}
-			
+
                                                     data.news_videos = result;
 
 			return mongo.collection('shows')
@@ -230,7 +230,7 @@ exports.get_index = function (req, res, next) {
 			data.games_ids = [];
 			data.featured_games = [];
 			data.featured_games_ids = [];
-			
+
 			console.log('Filter tags');
 
 			for(var i=0; i < result.length; i++) {
@@ -355,15 +355,15 @@ exports.get_index = function (req, res, next) {
 
 						var today = new Date();
 						/* RDC : Removed 2015-02-18 : Select latest videos ordered by latest */
-						
+
 						//var yesterday = new Date();
 						//yesterday.setDate(today.getDate()-1);
 						//var minus2days = new Date();
 						//minus2days.setDate(today.getDate()-2);
 						//var minus3days = new Date();
 						//minus3days.setDate(today.getDate()-3);
-						
-						/* End */	
+
+						/* End */
 
 						var where = {
 							'snippet.publishedAt' : {
@@ -576,104 +576,55 @@ exports.flush_cache = function(req, res, next) {
 	res.send({'message': message});
 }
 
+exports.clean_consoles = function (req, res, next) {
+	var start = function () {
+
+		}
+};
+
 exports.getGamesPerConsole = function(req, res, next) {
-	var gameList	  = [],
+	var consoles 	  = [],
+		gameCounter	  = {},
 		finalGameList = [],
 		cacheKey      = 'games.perconsole',
-	start = function() {
-		getGames();
-		var cache = util.get_cache(cacheKey);
-	},
-	getGames = function() {
-		mysql.open(config.mysql).query('call `asiafreedom`.`getgamesperconsole`;').end();
-		mysql.open(config.mysql).query('Select * From gamesperconsole', [], getValues).end();
-		
-	},
-	getValues = function(err, gamelist) {
-	   mysql.open(config.mysql)
-			.query("Select * From xf_option Where option_id = 'anytv_categories_categories'",
-				   [],
-				   function(err, result) {
-					   
-						result[0].option_id = new Buffer( result[0].option_id, 'binary' ).toString();
-						result[0].option_value = us.unserialize(new Buffer( result[0].option_value, 'binary' )
-								.toString());
-						result[0].default_value = new Buffer( result[0].default_value, 'binary' ).toString();
-						result[0].addon_id = new Buffer( result[0].addon_id, 'binary' ).toString();
-			
-						var values = result[0].option_value;
-						var finalvalue = [];
-						var gameInfo = {};
-						var gameImg	 = '';
-						
-						for(var gIdx = 0; gIdx < gamelist.length; gIdx++) {
-							
-							var hasInfo = false;
-							
-							switch (gamelist[gIdx].platforms) {
-								case 'pc' :
-									gameImg = './assets/images/game-logos/pc.jpg';
-									break;
-								case 'xbox1' :
-									gameImg = './assets/images/game-logos/xbox1.jpg';
-									break;
-								case 'xbox360' :
-									gameImg = './assets/images/game-logos/xbox360.jpg';
-									break;
-								case 'ps3' :
-									gameImg = './assets/images/game-logos/ps3.jpg';
-									break;
-								case 'ps4' :
-									gameImg = './assets/images/game-logos/ps4.jpg';
-									break;
-								case 'mobile_app' :
-									gameImg = './assets/images/game-logos/mobile.jpg';
-									break;
-								case 'vlogs' :
-									gameImg = './assets/images/game-logos/pc.jpg';
-									break;
-								default :
-									break;
+		start = function() {
+			mysql.open(config.mysql)
+				.query(
+					'SELECT console_id from anytv_console_tags',
+					[],
+					function (err, consoles) {
+						consoles.forEach(function(platforms) {
+							if (platforms.console_id === 'all') {
+								return;
 							}
-							
-							
-							for (var gInfo = 0; gInfo < values.game_id.length; gInfo++) {
-								if (gamelist[gIdx].id === values.game_id[gInfo]) {
-									finalvalue.push({id			: values.game_id[gInfo],
-													 consoles	: gamelist[gIdx].platforms,
-													 game		: values.game_name[gInfo].replace(/_/g, ' '),
-													 gamename	: values.game_name[gInfo].replace(/_/g, ' '),
-													 imgsrc		: values.game_image[gInfo],
-													 chinese	: values.game_chi[gInfo],
-													 sort		: values.sort[gInfo]
-													});
-									hasInfo = true;
-									break;
-								} else {
-									gameInfo = {id			: gamelist[gIdx].id,
-											    consoles	: gamelist[gIdx].platforms,
-												game		: gamelist[gIdx].id.replace(/_/g, ' '),
-												gamename	: gamelist[gIdx].id.replace(/_/g, ' '),
-												imgsrc		: gameImg,
-												chinese		: '',
-												sort		: '1000'
-												}
-								}
-							}
-							
-							if (hasInfo === false) {
-								finalvalue.push(gameInfo);
-							}
-						}
-					   sendResponse(err, finalvalue);
-					   
-				   }).end();
-	},
-	sendResponse = function(err, result) {
-		util.set_cache(cacheKey, result);
-		res.send(result);
-	}
-	
+
+							gameCounter[platforms.console_id] = [];
+						});
+
+						games.get_games(req, {
+				            send: function (games) {
+				            	games.forEach(function (game) {
+				            		if(game.consoles) {
+				            			game.consoles.forEach(function (platform) {
+				            				if (gameCounter[platform.trim()]) {
+						            			gameCounter[platform.trim()].push(game);
+						            		} else {
+						            			console.log('no platform', platform);
+						            		}
+					            		});
+				            		}
+				            	});
+
+				            	send_response(null, gameCounter);
+				            }
+				        }, next);
+					});
+		},
+		send_response = function(err, result) {
+			util.set_cache(cacheKey, result);
+			res.send(result);
+		};
+
 	start();
 };
 

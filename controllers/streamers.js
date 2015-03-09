@@ -247,7 +247,7 @@ exports.get_hitbox_streamers = function (req, res, next) {
                             .end(function(err, res){
                                 result = res.body;
 
-                                if (typeof result !== 'undefined' && 
+                                if (typeof result !== 'undefined' &&
                                     result.livestream.length &&
                                     parseInt(result.livestream[0].media_is_live)
                                 )
@@ -270,7 +270,7 @@ exports.get_hitbox_streamers = function (req, res, next) {
       //                           result = JSON.parse(result);
       //                       }
 
-      //                       if(!!result && 
+      //                       if(!!result &&
       //                           result.livestream.length &&
       //                           parseInt(result.livestream[0].media_is_live)
       //                       )
@@ -279,8 +279,8 @@ exports.get_hitbox_streamers = function (req, res, next) {
       //                       }
       //                       cb(null, result);
       //                   });
-                        
-                        
+
+
                     };
                     q.push(fn);
 				}
