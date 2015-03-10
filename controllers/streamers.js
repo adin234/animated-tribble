@@ -2,7 +2,7 @@ var config = require(__dirname + '/../config/config'),
     util = require(__dirname + '/../helpers/util'),
     mysql = require(__dirname + '/../lib/mysql'),
     games = require(__dirname + '/games'),
-    curl = require(__dirname + '/../lib/curl'),
+    curl = require('cuddle'),
     async = require('async'),
     superagent = require('superagent'),
     logger = require(__dirname + '/../lib/logger');
@@ -98,12 +98,12 @@ exports.get_youtube_streamers = function (req, res, next) {
             result.forEach(function (user) {
                 if (user.field_value.trim()
                     .length && (req.query.user ? user.user_id == req.query.user : 1)) {
-                    console.log('went in');
                     user.field_id = new Buffer(user.field_id, 'binary')
                         .toString();
                     data[user.youtube] = {
                         user: user
                     }
+
                     index++;
                     curl.post
                         .to(
@@ -111,6 +111,7 @@ exports.get_youtube_streamers = function (req, res, next) {
                             443,
                             '/o/oauth2/token'
                         )
+                        .args(index)
                         .secured()
                         .send({
                             client_id: config.api.client_id,
@@ -122,8 +123,9 @@ exports.get_youtube_streamers = function (req, res, next) {
                 }
             });
         },
-        get_streams = function (err, result) {
+        get_streams = function (err, result, request, args) {
             if (err) {
+                index--;
                 console.log('error in getting stream');
                 return next(err);
             }
@@ -139,6 +141,7 @@ exports.get_youtube_streamers = function (req, res, next) {
                     'Authorization',
                     'Bearer ' + result.access_token
                 )
+                .args(args[0])
                 .send({
                     part: 'snippet',
                     broadcastStatus: 'active'
@@ -150,10 +153,8 @@ exports.get_youtube_streamers = function (req, res, next) {
             if (result && result.items && result.items.length) {
                 data[result.items[0].snippet.channelId].streams = result;
             }
-            //console.log('INDEX ', index);
 
-
-            if (index < 1) {
+            if (index <= 1) {
                 format_response(null, data);
             }
         },
@@ -255,12 +256,14 @@ exports.get_hitbox_streamers = function (req, res, next) {
                             .send()
                             .set('Accept', 'application/json')
                             .end(function (err, res) {
+                                if (err) {
+                                    return next(err);
+                                }
                                 result = res.body;
 
                                 if (typeof result !== 'undefined' && result.livestream && result.livestream
                                     .length &&
                                     parseInt(result.livestream[0].media_is_live)
-
                                 ) {
                                     data[user.field_value].hitbox = result;
                                 }
@@ -519,7 +522,6 @@ exports.get_streamers = function (req, res, next) {
                         request.push(value);
                         return value
                     });
-                console.log(item);
 
                 item.secondary_group_ids = new Buffer(item.secondary_group_ids, 'binary')
                     .toString();
