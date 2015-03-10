@@ -126,7 +126,7 @@ var check_streamers = function () {
                             if (filtered.length !== checker.new_streamers.length ||
                                 checker.new_streamers.length <
                                 checker.old_streamers.length) {
-                                io.sockets.emit('message', streamers_new);
+                                io.sockets.emit('message', {'streamers':streamers_new});
                             }
 
                             streamers_old = JSON.parse(JSON.stringify(
