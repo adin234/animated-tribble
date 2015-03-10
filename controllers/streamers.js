@@ -154,7 +154,7 @@ exports.get_youtube_streamers = function (req, res, next) {
                 data[result.items[0].snippet.channelId].streams = result;
             }
 
-            if (index <= 1) {
+            if (index < 1) {
                 format_response(null, data);
             }
         },
