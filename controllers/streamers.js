@@ -151,9 +151,6 @@ exports.get_youtube_streamers = function (req, res, next) {
             if (result && result.items && result.items.length) {
                 data[result.items[0].snippet.channelId].streams = result;
             }
-
-            //console.log('INDEX', index);
-
             if (index <= 1) {
                 format_response(null, data);
             }
@@ -258,11 +255,10 @@ exports.get_hitbox_streamers = function (req, res, next) {
                                 if (err) {
                                     return next(err);
                                 }
-
                                 result = res.body;
-                                if (typeof result !== 'undefined' &&
-                                    result.livestream &&
-                                    result.livestream.length &&
+
+                                if (typeof result !== 'undefined' && result.livestream && result.livestream
+                                    .length &&
                                     parseInt(result.livestream[0].media_is_live)
                                 ) {
                                     data[user.field_value].hitbox = result;
@@ -397,7 +393,8 @@ exports.get_is_streaming = function (req, res, next) {
                     client_secret: config.api.client_secret,
                     refresh_token: result[0].field_value,
                     grant_type: 'refresh_token'
-                }).then(get_streams);
+                })
+                .then(get_streams);
 
         },
         get_streams = function (err, result) {
@@ -488,7 +485,8 @@ exports.get_streamers = function (req, res, next) {
                         'twitchStreams'
                     ],
                     format_buffer
-                ).end();
+                )
+                .end();
         },
         format_buffer = function (err, result) {
             if (err) {
@@ -551,7 +549,8 @@ exports.get_streamers = function (req, res, next) {
                         .secured()
                         .send({
                             channel: request.join(',')
-                        }).then(format_response);
+                        })
+                        .then(format_response);
                 });
 
         },
@@ -600,9 +599,10 @@ exports.get_streamers = function (req, res, next) {
             }
 
             if (result.length === 0) {
-                return res.status(500).send({
-                    message: 'user not found'
-                });
+                return res.status(500)
+                    .send({
+                        message: 'user not found'
+                    });
             }
 
             util.set_cache(cacheKey, result, 60);
@@ -683,7 +683,8 @@ exports.get_streamers_data = function (req, res, next) {
 		            a.id = c.game_id AND c.active = 1 \
 		            order by priority', [],
                     filter_tags
-                ).end();
+                )
+                .end();
         },
         filter_tags = function (err, result) {
             if (err) {
