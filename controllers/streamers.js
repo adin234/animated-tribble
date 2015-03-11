@@ -154,7 +154,7 @@ exports.get_youtube_streamers = function (req, res, next) {
                 data[result.items[0].snippet.channelId].streams = result;
             }
 
-            if (index <= 1) {
+            if (index < 1) {
                 format_response(null, data);
             }
         },
@@ -586,8 +586,11 @@ exports.get_streamers = function (req, res, next) {
                         var lanparty_check = req.query.checker || 'LAN PARTY';
                         lanparty_check = new RegExp(lanparty_check, 'ig');
                         if (!req.query.lanparty || (
-                                req.query.lanparty && newitem.twitch.channel
-                                .status.reIndexOf(lanparty_check))) {
+                                req.query.lanparty 
+				&& newitem.twitch
+				&& newitem.twitch.channel
+				&& newitem.twitch.channel.status
+				&& newitem.twitch.channel.status.reIndexOf(lanparty_check))) {
                             streamers.push(newitem);
                         }
                     }

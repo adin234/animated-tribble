@@ -52,3 +52,9 @@ function Date_toYMD() {
     return year + "-" + month + "-" + day;
 }
 
+if (typeof String.prototype.reIndexOf === 'undefined') {
+    String.prototype.reIndexOf = function (rx) {
+        var rtn = this.match(rx);
+        return rtn && rtn.length;
+    };
+}
