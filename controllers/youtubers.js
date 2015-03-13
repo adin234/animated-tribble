@@ -596,42 +596,61 @@ exports.get_youtubers = function (req, res, next) {
 exports.post_comment = function (req, res, next) {
     var data = {},
         user = {},
+        comment_id = 0,
+        video_owner_id = 0,
         start = function (err, next) {
             user.access = req.body.access_token;
             user.user = req.body.user_id;
+            util.get_access(user, get_video_owner);
+        },
+        get_video_owner = function (err, result) {
+            if(err) {
+                return next({
+                    status: '500',
+                    code: 'user_not_authenticated',
+                    message: 'Invalid Access Token Supplied'
+                });
+            }
 
-            util.get_access(user, function(err, result) {
-                if(err) {
-                    return next({
-                        status: '500',
-                        code: 'user_not_authenticated',
-                        message: 'Invalid Access Token Supplied'
-                    });
-                }
+            mongo.collection('videos').find({
+                "snippet.resourceId.videoId": req.params.id
+            }, {
+                user_id:1,
+                _id:0
+            }).toArray(insert_comment);
+            
+        },
+        insert_comment = function (err, result) {
+            if(err) {
+                return next(err);
+            }
+            video_owner_id = result[0].user_id;
 
-                 mysql.open(config.mysql)
-                    .query(
-                        'INSERT INTO anytv_comments VALUES(NULL, ?, ?, ?, ?, ?)',
-                        [   req.body.user_id, req.body.username,
-                            req.params.id, req.body.message,
-                            parseInt((+new Date)/1000)],
-                        create_notification
-                    ).end();
-            });
+            mysql.open(config.mysql)
+                .query(
+                    'INSERT INTO anytv_comments VALUES(NULL, ?, ?, ?, ?, ?)',
+                    [   req.body.user_id, req.body.username,
+                        req.params.id, req.body.message,
+                        parseInt((+new Date)/1000)],
+                    create_notification
+                ).end();
         },
         create_notification = function (err, result) {
             if(err) {
                 return next(err);
             }
-
-            mysql.open(config.mysql)
-                .query(
-                    'INSERT INTO xf_news_feed VALUES(NULL, ?, ?, \
-                        \'anytv-comment\', ?, \'insert\', ?, "")',
-                    [   req.body.user_id, req.body.username,
-                        req.params.id, parseInt((+new Date)/1000)],
-                    send_response
-                ).end();
+            if(video_owner_id != req.body.user_id) {
+                mysql.open(config.mysql)
+                    .query(
+                        'INSERT INTO xf_user_alert VALUES(NULL, ?, ?, ?, \
+                            \'anytvcomment\', ?, \'insert\', ?, 0, "")',
+                        [   video_owner_id, req.body.user_id, req.body.username,
+                            result.insertId, parseInt((+new Date)/1000)],
+                        send_response
+                    ).end();
+                } else {
+                    send_response();
+                }
         },
         send_response = function (err, result) {
             if(err) {
@@ -640,7 +659,6 @@ exports.post_comment = function (req, res, next) {
 
             res.send(result);
         };
-
     start();
 };
 

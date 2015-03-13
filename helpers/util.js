@@ -151,7 +151,7 @@ exports.get_access = function(access, callback) {
         .findOne({
             'user.access_code' : access.access
         }, function(err, result) {
-            console.log(result);
+            //console.log(result);
 
             if(!result || (!err && result.user.user_id != access.user)) {
                 return callback('not authenticated', {});
