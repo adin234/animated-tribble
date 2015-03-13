@@ -71,11 +71,11 @@ module.exports	= function (router, logger) {
 	router.get('/user/personal/:id', user.get_youtuber_profile);
 	router.get('/get_location', login.get_location);
 	router.get('/earnings', login.get_earnings);
-	router.get('/loaderio-37804bf004f92d92a8319891ded25d31.html', function(req, res, next){
-		res.send('loaderio-37804bf004f92d92a8319891ded25d31');
+	router.get('loaderio-66d5eb26492cdc4ee0060963837f8986.html', function(req, res, next){
+		res.send('loaderio-66d5eb26492cdc4ee0060963837f8986');
 	});
-	router.get('/loaderio-37804bf004f92d92a8319891ded25d31.txt', function(req,res,next){
-		res.send('loaderio-37804bf004f92d92a8319891ded25d31');
+	router.get('/loaderio-66d5eb26492cdc4ee0060963837f8986.txt', function(req,res,next){
+		res.send('loaderio-66d5eb26492cdc4ee0060963837f8986');
 	});
 
 	// router.post('/send_message', arrowchat.send_message);
