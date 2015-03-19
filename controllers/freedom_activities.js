@@ -9,9 +9,14 @@ var config = require(__dirname + '/../config/config'),
 exports.get_admin_users = function (req, res, next) {
     start = function () {
 
+            if (typeof req.cookies.user === 'undefined') {
+                return res.send('not logged in');
+            }
+
 
             var admin_group = 3;
-            var user_id = 18;
+            var user_id = JSON.parse(req.cookies.user)
+                .user_id;
 
             mysql.open(config.mysql)
                 .query(
@@ -26,6 +31,10 @@ exports.get_admin_users = function (req, res, next) {
                                 templating();
                             }
                         });
+
+                        if (err) {
+                            res.send('Not an admin');
+                        }
                     }
                 )
                 .end();
@@ -67,9 +76,11 @@ exports.get_admin_users = function (req, res, next) {
                 '<textarea id="event_desc" name="event_desc" placeholder="Event Description"></textarea>'
             );
             html.push('<button onclick="add_event()">ADD EVENT</button>');
+            html.push('<input type=hidden>');
 
 
             res.send(html);
+            return html;
         };
 
 
