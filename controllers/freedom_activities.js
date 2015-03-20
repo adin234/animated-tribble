@@ -2,6 +2,9 @@ var config = require(__dirname + '/../config/config'),
     logger = require(__dirname + '/../lib/logger'),
     mongo = require(__dirname + '/../lib/mongoskin'),
     mysql = require(__dirname + '/../lib/mysql'),
+    csrf = require('csurf'),
+    cookieParser = require('cookie-parser'),
+    express = require('express'),
     bodyParser = require('body-parser');
 
 
@@ -12,7 +15,6 @@ exports.get_admin_users = function (req, res, next) {
             if (typeof req.cookies.user === 'undefined') {
                 return res.send('not logged in');
             }
-
 
             var admin_group = 3;
             var user_id = JSON.parse(req.cookies.user)
@@ -38,7 +40,6 @@ exports.get_admin_users = function (req, res, next) {
                     }
                 )
                 .end();
-
         },
 
         templating = function () {
@@ -46,7 +47,7 @@ exports.get_admin_users = function (req, res, next) {
             var html = [];
 
             html.push('<div id="add_event_header"> Add Event </div>');
-            html.push('<div id="addForm"><form>');
+            html.push('<div id="addForm"><form action="/process" method="POST">');
             html.push(
                 '<p id="e_title">Title</p> <input type="text" name="event_name" placeholder="Event Title" id="event_name" required>'
             );
@@ -76,11 +77,41 @@ exports.get_admin_users = function (req, res, next) {
                 '<textarea id="event_desc" name="event_desc" placeholder="Event Description"></textarea>'
             );
             html.push('<button onclick="add_event()">ADD EVENT</button>');
-            html.push('<input type=hidden>');
+            html.push('<input type=hidden name="_csrf" value="{{csrfToken}}" id="csrftoken">');
 
+            var csrf_token = tokenizer();
+            console.log(csrf_token);
 
             res.send(html);
             return html;
+        },
+
+        tokenizer = function () {
+
+            var csrfProtection = csrf({
+                cookie: true
+            });
+
+            var parseForm = bodyParser.urlencoded({
+                extended: false
+            });
+
+            var app = express();
+
+            app.use(cookieParser());
+
+            app.get('/form', csrfProtection, function (res, req) {
+
+                res.render('send', {
+                    csrfToken: req.csrfToken()
+                });
+
+            });
+
+            app.post('/process', parseForm, csrfProtection, function (req, res) {
+                res.send('Data Processing');
+            });
+
         };
 
 
