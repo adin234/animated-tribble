@@ -23,7 +23,7 @@ exports.get_admin_users = function (req, res, next) {
             mysql.open(config.mysql)
                 .query(
 
-                    'select * from xf_user where user_id = ? AND (user_group_id = ? or secondary_group_ids = ?)', [
+                    'select * from xf_user where user_id = ? AND (user_group_id = ? or secondary_group_ids LIKE "%?%")', [
                         user_id, admin_group, admin_group
                     ],
 
@@ -79,11 +79,11 @@ exports.get_admin_users = function (req, res, next) {
             html.push('<button onclick="add_event()">ADD EVENT</button>');
             html.push('<input type=hidden name="_csrf" value="{{csrfToken}}" id="csrftoken">');
 
-            var csrf_token = tokenizer();
-            console.log(csrf_token);
+           var csrf_token = tokenizer();
+           console.log(csrf_token);
 
             res.send(html);
-            return html;
+           // return html;
         },
 
         tokenizer = function () {
@@ -111,6 +111,14 @@ exports.get_admin_users = function (req, res, next) {
             app.post('/process', parseForm, csrfProtection, function (req, res) {
                 res.send('Data Processing');
             });
+
+       
+        },
+
+
+        filter_tokens = function(){
+
+
 
         };
 
