@@ -7,18 +7,23 @@ var loc = __dirname + '/../controllers/',
     shows = require(loc + 'shows'),
     youtubers = require(loc + 'youtubers'),
     freedom_activities = require(loc + 'freedom_activities'),
-    streamers = require(loc + 'streamers');
+    streamers = require(loc + 'streamers'),
+    csrf = require('csurf');
 // arrowchat = require(loc + 'arrowchat');
 
 
 
 
 
-module.exports = function (router, logger) {
+module.exports = function(router, logger) {
+
+    csrfProtection = csrf({
+        cookie: true
+    });
 
     router.del = router.delete;
 
-    router.all('*', function (req, res, next) {
+    router.all('*', function(req, res, next) {
         res.setHeader('Access-Control-Allow-Origin', '*');
         logger.log('debug', '--REQUEST BODY--', req.body);
         logger.log('debug', '--REQUEST QUERY--', req.query);
@@ -37,9 +42,11 @@ module.exports = function (router, logger) {
     router.get('/freedom_activities', youtubers.get_freedom_activities);
     router.get('/freedom_events', freedom_activities.get_events);
     router.get('/freedom_events/search/:keyword', freedom_activities.search_events);
-    router.post('/freedom_events/add', freedom_activities.add_event);
+    router.post('/freedom_events/add', csrfProtection, freedom_activities.add_event);
     router.get('/freedom_events/delete/:id', freedom_activities.delete_event);
-    router.get('/freedom_events/checkAdmin', freedom_activities.get_admin_users);
+    router.get('/freedom_events/checkAdmin', csrfProtection, freedom_activities.get_admin_users);
+    // router.get('/freedom_events/tokens', freedom_activities.validate_token);
+    // router.get('/freedom_events/storeToken', freedom_activities.store_token);
     //router.post('/freedom_events/update', freedom_activities.update_event);
     /* RDC 2015-02-20 */
     router.get('/gamesperconsole', index.getGamesPerConsole);
@@ -76,10 +83,10 @@ module.exports = function (router, logger) {
     router.get('/user/personal/:id', user.get_youtuber_profile);
     router.get('/get_location', login.get_location);
     router.get('/earnings', login.get_earnings);
-    router.get('/loaderio-37804bf004f92d92a8319891ded25d31.html', function (req, res, next) {
+    router.get('/loaderio-37804bf004f92d92a8319891ded25d31.html', function(req, res, next) {
         res.send('loaderio-37804bf004f92d92a8319891ded25d31');
     });
-    router.get('/loaderio-37804bf004f92d92a8319891ded25d31.txt', function (req, res, next) {
+    router.get('/loaderio-37804bf004f92d92a8319891ded25d31.txt', function(req, res, next) {
         res.send('loaderio-37804bf004f92d92a8319891ded25d31');
     });
 
@@ -87,7 +94,7 @@ module.exports = function (router, logger) {
 
     router.get('/vid_suggestions', youtubers.get_suggestions);
     router.post('/batch/update', youtubers.update_videos);
-    router.all('*', function (req, res) {
+    router.all('*', function(req, res) {
         res.status(404)
             .send({
                 message: 'Nothing to do here.'
@@ -96,4 +103,3 @@ module.exports = function (router, logger) {
 
     return router;
 };
-
