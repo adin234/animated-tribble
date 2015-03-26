@@ -80,12 +80,7 @@
              var csrfToken = req.csrfToken();
              var returnString = '<input type="hidden" name="_csrf" value="' + csrfToken + '" id="csrftoken">';
              html.push(returnString);
-
-
-             console.log(returnString);
-
              res.send(html);
-
          };
 
 
@@ -99,9 +94,6 @@
              if (freedom_events) {
                  return freedom_events.find()
                      .toArray(send_response);
-
-
-
              } else {
                  send_response(true, null);
              }
