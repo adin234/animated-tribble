@@ -12,8 +12,10 @@
  exports.get_admin_users = function(req, res) {
      var start = function() {
 
+
+
              if (typeof req.cookies.user === 'undefined') {
-                 return res.send('not logged in');
+                 return res.jsonp('not logged user');
              }
 
              var admin_group = 3;
@@ -28,15 +30,16 @@
                      ],
 
                      function(err, result) {
+                         if (err) {
+                             return res.jsonp('Not an admin');
+                         }
                          result.forEach(function(item) {
                              if (item.user_id === user_id) {
                                  templating();
                              }
                          });
 
-                         if (err) {
-                             res.send('Not an admin');
-                         }
+
                      }
                  )
                  .end();
@@ -80,7 +83,7 @@
              var csrfToken = req.csrfToken();
              var returnString = '<input type="hidden" name="_csrf" value="' + csrfToken + '" id="csrftoken">';
              html.push(returnString);
-             res.send(html);
+             res.jsonp(html);
          };
 
 
