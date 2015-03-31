@@ -15,6 +15,8 @@
 
 
              if (typeof req.cookies.user === 'undefined') {
+
+                 console.log(req.cookies.user);
                  return res.jsonp('not logged user');
              }
 
@@ -43,6 +45,7 @@
                      }
                  )
                  .end();
+
          },
 
          templating = function() {
@@ -50,7 +53,7 @@
              var html = [];
 
              html.push('<div id="add_event_header"> Add Event </div>');
-             html.push('<div id="addForm"><form action="/process" method="POST">');
+             html.push('<div id="addForm"><form id="event_form">');
              html.push(
                  '<p id="e_title">Title</p> <input type="text" name="event_name" placeholder="Event Title" id="event_name" required>'
              );
@@ -80,6 +83,7 @@
                  '<textarea id="event_desc" name="event_desc" placeholder="Event Description"></textarea>'
              );
              html.push('<button onclick="add_event()">ADD EVENT</button>');
+
              var csrfToken = req.csrfToken();
              var returnString = '<input type="hidden" name="_csrf" value="' + csrfToken + '" id="csrftoken">';
              html.push(returnString);
@@ -89,6 +93,81 @@
 
      start();
  };
+
+ exports.get_access_token = function(req, res, next) {
+
+
+     if (typeof req.cookies.user === 'undefined') {
+         return res.send('not logged in');
+     }
+     var user_id_online = JSON.parse(req.cookies.user)
+         .user_id,
+         user_access_code = JSON.parse(req.cookies.user).access_code;
+
+     var start = function() {
+             var access_token = mongo.collection('access_token');
+
+             if (access_token) {
+                 return access_token.find({}).toArray(send_response);
+             } else {
+                 send_response(true, null);
+             }
+         },
+         send_response = function(err, result) {
+             if (err) {
+                 return next(err);
+             }
+             res.send(result);
+         };
+     start();
+ };
+
+
+ exports.generate_tokens = function(req, res, next) {
+
+     var start = function() {
+             if (typeof req.cookies.user === 'undefined') {
+                 return res.send('not logged in');
+             }
+
+             var csrftoken = req.csrfToken();
+
+             if (csrftoken) {
+                 add_token(csrftoken);
+             }
+
+         },
+         add_token = function(csrf_val) {
+
+             var user_id_online = JSON.parse(req.cookies.user)
+                 .user_id,
+                 access_tokens = mongo.collection('access_token');
+             if (access_tokens) {
+                 access_tokens.update({
+                     'user.user_id': user_id_online
+                 }, {
+                     $set: {
+                         csrf_token: csrf_val
+                     }
+                 }, function() {
+                     send_response(false, null);
+                 });
+
+             } else {
+                 send_response(true, null);
+             }
+         },
+
+         send_response = function(err, result) {
+             if (err) {
+                 return next(err);
+             }
+             res.send(result);
+         };
+
+     start();
+ };
+
 
  exports.get_events = function(req, res, next) {
 
@@ -144,7 +223,11 @@
 
      var start = function() {
              var freedom_events = mongo.collection('fa_events');
+
+             console.log(freedom_events);
              if (freedom_events) {
+
+                 //   console.log(req.body);
                  freedom_events.insert(req.body, {}, function() {
                      send_response(false, 'event added');
                  });
