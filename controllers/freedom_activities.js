@@ -9,10 +9,10 @@
 
 
 
- exports.get_admin_users = function(req, res) {
+ exports.get_admin_users = function(req, res, next) {
      var start = function() {
 
-
+             var csrfToken = req.csrfToken();
 
              if (typeof req.cookies.user === 'undefined') {
 
@@ -37,18 +37,17 @@
                          }
                          result.forEach(function(item) {
                              if (item.user_id === user_id) {
-                                 templating();
+                                 templating(csrfToken);
+                                 add_token(csrfToken, user_id);
                              }
                          });
-
-
                      }
                  )
                  .end();
 
          },
 
-         templating = function() {
+         templating = function(csrfToken) {
 
              var html = [];
 
@@ -83,65 +82,13 @@
                  '<textarea id="event_desc" name="event_desc" placeholder="Event Description"></textarea>'
              );
              html.push('<button onclick="add_event()">ADD EVENT</button>');
-
-             var csrfToken = req.csrfToken();
              var returnString = '<input type="hidden" name="_csrf" value="' + csrfToken + '" id="csrftoken">';
              html.push(returnString);
              res.jsonp(html);
-         };
-
-
-     start();
- };
-
- exports.get_access_token = function(req, res, next) {
-
-
-     if (typeof req.cookies.user === 'undefined') {
-         return res.send('not logged in');
-     }
-     var user_id_online = JSON.parse(req.cookies.user)
-         .user_id,
-         user_access_code = JSON.parse(req.cookies.user).access_code;
-
-     var start = function() {
-             var access_token = mongo.collection('access_token');
-
-             if (access_token) {
-                 return access_token.find({}).toArray(send_response);
-             } else {
-                 send_response(true, null);
-             }
          },
-         send_response = function(err, result) {
-             if (err) {
-                 return next(err);
-             }
-             res.send(result);
-         };
-     start();
- };
+         add_token = function(csrf_val, user_id_online) {
 
-
- exports.generate_tokens = function(req, res, next) {
-
-     var start = function() {
-             if (typeof req.cookies.user === 'undefined') {
-                 return res.send('not logged in');
-             }
-
-             var csrftoken = req.csrfToken();
-
-             if (csrftoken) {
-                 add_token(csrftoken);
-             }
-
-         },
-         add_token = function(csrf_val) {
-
-             var user_id_online = JSON.parse(req.cookies.user)
-                 .user_id,
-                 access_tokens = mongo.collection('access_token');
+             var access_tokens = mongo.collection('access_token');
              if (access_tokens) {
                  access_tokens.update({
                      'user.user_id': user_id_online
@@ -149,25 +96,53 @@
                      $set: {
                          csrf_token: csrf_val
                      }
-                 }, function() {
-                     send_response(false, null);
                  });
+             } else {
+                 send_response(true);
+             }
+         },
+         send_response = function(err) {
+             if (err) {
+                 return next(err);
+             }
+         };
+     start();
+ };
 
+
+ exports.get_token = function(req, res, next) {
+
+     var csrf_validate;
+     var start = function() {
+
+             if (typeof req.cookies.user === 'undefined') {
+                 return res.jsonp('not logged user');
+             }
+
+             var user_id = JSON.parse(req.cookies.user)
+                 .user_id;
+             var access_tokens = mongo.collection('access_token');
+             if (access_tokens) {
+                 return access_tokens.find({
+                     'user.user_id': user_id
+                 }).toArray(send_response);
              } else {
                  send_response(true, null);
              }
          },
-
          send_response = function(err, result) {
              if (err) {
                  return next(err);
              }
-             res.send(result);
+
+             result.forEach(function(item) {
+                 csrf_validate = item.csrf_token;
+             });
+             res.send(csrf_validate);
          };
 
      start();
  };
-
 
  exports.get_events = function(req, res, next) {
 
