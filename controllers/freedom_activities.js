@@ -1,7 +1,8 @@
  'use strict';
 
- /*global exports, require*/
+ /*global exports, require, console, __dirname*/
  /*jshintrc camelcase:false*/
+
  var config = require(__dirname + '/../config/config'),
      logger = require(__dirname + '/../lib/logger'),
      mongo = require(__dirname + '/../lib/mongoskin'),
@@ -12,17 +13,14 @@
  exports.get_admin_users = function(req, res, next) {
      var start = function() {
 
-             var csrfToken = req.csrfToken();
+             var csrfToken = req.csrfToken(),
+                 admin_group = 3,
+                 user_id = JSON.parse(req.cookies.user)
+                 .user_id;
 
              if (typeof req.cookies.user === 'undefined') {
-
-                 console.log(req.cookies.user);
                  return res.jsonp('not logged user');
              }
-
-             var admin_group = 3;
-             var user_id = JSON.parse(req.cookies.user)
-                 .user_id;
 
              mysql.open(config.mysql)
                  .query(
@@ -81,13 +79,12 @@
              html.push(
                  '<textarea id="event_desc" name="event_desc" placeholder="Event Description"></textarea>'
              );
-             html.push('<button onclick="add_event()">ADD EVENT</button>');
+             html.push('<button id="add_event_button"> ADD EVENT </button>');
              var returnString = '<input type="hidden" name="_csrf" value="' + csrfToken + '" id="csrftoken">';
              html.push(returnString);
              res.jsonp(html);
          },
          add_token = function(csrf_val, user_id_online) {
-
              var access_tokens = mongo.collection('access_token');
              if (access_tokens) {
                  access_tokens.update({
@@ -96,7 +93,7 @@
                      $set: {
                          csrf_token: csrf_val
                      }
-                 });
+                 }, send_response);
              } else {
                  send_response(true);
              }
@@ -118,7 +115,6 @@
              if (typeof req.cookies.user === 'undefined') {
                  return res.jsonp('not logged user');
              }
-
              var user_id = JSON.parse(req.cookies.user)
                  .user_id;
              var access_tokens = mongo.collection('access_token');
@@ -138,7 +134,7 @@
              result.forEach(function(item) {
                  csrf_validate = item.csrf_token;
              });
-             res.send(csrf_validate);
+             res.jsonp(csrf_validate);
          };
 
      start();
@@ -199,10 +195,8 @@
      var start = function() {
              var freedom_events = mongo.collection('fa_events');
 
-             console.log(freedom_events);
              if (freedom_events) {
 
-                 //   console.log(req.body);
                  freedom_events.insert(req.body, {}, function() {
                      send_response(false, 'event added');
                  });
