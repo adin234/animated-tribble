@@ -13,14 +13,16 @@
  exports.get_admin_users = function(req, res, next) {
      var start = function() {
 
+             if (typeof req.cookies.user === 'undefined') {
+                 return res.jsonp('not logged user');
+             }
+
              var csrfToken = req.csrfToken(),
                  admin_group = 3,
                  user_id = JSON.parse(req.cookies.user)
                  .user_id;
 
-             if (typeof req.cookies.user === 'undefined') {
-                 return res.jsonp('not logged user');
-             }
+
 
              mysql.open(config.mysql)
                  .query(
