@@ -65,12 +65,12 @@
                  ' id="event_end_date" required>'
              );
              html.push(
-                 '<p id="s_time">Start Time</p> <input type="time"' +
-                 ' name="event_start_time"' +
+                 '<p id="s_time">Start Time</p> <input type="text"' +
+                 'name="event_start_time"' +
                  'placeholder="Event Start Time" id="event_start_time" required>'
              );
              html.push(
-                 '<p id="e_time">End Time</p> <input type="time"' +
+                 '<p id="e_time">End Time</p> <input type="text"' +
                  'name="event_end_time"' +
                  'placeholder="Event End Time" id="event_end_time" required>'
              );
