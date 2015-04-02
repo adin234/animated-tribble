@@ -22,8 +22,6 @@
                  user_id = JSON.parse(req.cookies.user)
                  .user_id;
 
-
-
              mysql.open(config.mysql)
                  .query(
 
@@ -57,12 +55,12 @@
                  '<p id="e_title">Title</p> <input type="text" name="event_name" placeholder="Event Title" id="event_name" required>'
              );
              html.push(
-                 '<p id="e_s_date">Start Date</p> <input type = "date" name = "event_start_date"' +
+                 '<p id="e_s_date">Start Date</p> <input type="text" name = "event_start_date"' +
                  'placeholder = "Event Start Date"' +
                  'id = "event_start_date" required>'
              );
              html.push(
-                 '<p id="e_e_date">End Date</p> <input type="date"' +
+                 '<p id="e_e_date">End Date</p> <input type="text"' +
                  'name="event_end_date" placeholder="Event End Date"' +
                  ' id="event_end_date" required>'
              );
