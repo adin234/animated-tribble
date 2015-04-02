@@ -31,6 +31,11 @@ logger.log('verbose', 'Binding custom middlewares');
 app.use(require(__dirname + '/config/router')(express.Router(), logger));
 app.use(require(__dirname + '/lib/error_handler')());
 
+
+
+
+
+
 app.listen(config.port);
 logger.log('info', 'Server listening on port', config.port);
 
