@@ -37,12 +37,8 @@ module.exports = function(router, logger) {
     router.get('/lan_party', youtubers.get_lan_party);
     router.get('/freedom_activities', youtubers.get_freedom_activities);
     router.get('/freedom_events', freedom_activities.get_events);
-    router.get('/freedom_events/search/:keyword', freedom_activities.search_events);
-    router.post('/freedom_events/add', freedom_activities.add_event);
-    router.get('/freedom_events/delete/:id', freedom_activities.delete_event);
     router.get('/freedom_events/checkAdmin', csrfProtection, freedom_activities.get_admin_users);
-    router.get('/freedom_events/validate', freedom_activities.get_token);
-    //router.post('/freedom_events/update', freedom_activities.update_event);
+    router.get('/freedom_events/validation', freedom_activities.validate);
     /* RDC 2015-02-20 */
     router.get('/gamesperconsole', index.getGamesPerConsole);
     /* End */

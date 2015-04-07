@@ -242,75 +242,54 @@ exports.get_hitbox_streamers = function (req, res, next) {
             }
 
             result.forEach(function (user) {
-                if (user.field_value.trim()
-                    .length && (req.query.user ? user.user_id == req.query.user : 1)) {
+                if (
+                    user.field_value.trim().length && (req.query.user ? user.user_id == req.query.user : 1)
+                ) {
                     user.field_id = new Buffer(user.field_id, 'binary')
                         .toString();
-                    data[user.field_value] = {
-                        user: user
-                    }
-                    index++;
-                    var fn = function (cb) {
-                        superagent
-                            .get('http://api.hitbox.tv/media/live/' + user.field_value)
-                            .send()
-                            .set('Accept', 'application/json')
-                            .end(function (err, res) {
-                                if (err) {
-                                    return next(err);
-                                }
-                                result = res.body;
 
-                                if (typeof result !== 'undefined' && result.livestream && result.livestream
-                                    .length &&
-                                    parseInt(result.livestream[0].media_is_live)
-                                ) {
-                                    data[user.field_value].hitbox = result;
-                                }
-                                cb(null, result);
-                            });
+                    user.field_value = clean(user.field_value);
 
-
-                        //                   curl.get
-                        // .to(
-                        // 	'api.hitbox.tv',
-                        // 	80,
-                        // 	'/media/live/' + user.field_value //channel
-                        // )
-                        // .send().then(function(err, result) {
-                        //                       if (typeof result === 'string') {
-                        //                           console.log('test');
-                        //                           result = JSON.parse(result);
-                        //                       }
-
-                        //                       if(!!result &&
-                        //                           result.livestream.length &&
-                        //                           parseInt(result.livestream[0].media_is_live)
-                        //                       )
-                        //                       {
-                        //                           data[result.livestream[0].media_name].hitbox = result;
-                        //                       }
-                        //                       cb(null, result);
-                        //                   });
-
-
-                    };
-                    q.push(fn);
+                    data[user.field_value.toLowerCase()] = { user: user };
+                    q.push(user.field_value);
                 }
             });
 
-            async.parallel(q, format_response);
+            curl.get
+                .to(
+                 'api.hitbox.tv',
+                 80,
+                 '/media/live/' + q.join(',')
+                )
+                .send()
+                .then(format_response);
         },
-        format_response = function (err, results) {
-            response = {
+
+        clean = function (input) {
+            return input.trim()
+                .replace(/(http:\/\/)?(www.)?(hitbox|twitch)\.tv\/?([a-zA-Z0-9_.]+)\/?/, '$4');
+        },
+
+        format_response = function (err, result) {
+            if (err) {
+                return next(err);
+            }
+
+            var response = {
                 streamers: []
             };
 
-            for (var i in data) {
-                if (typeof data[i].hitbox !== 'undefined') {
-                    response.streamers.push(data[i]);
-                }
-            }
+            result.livestream &&
+                result.livestream.forEach(function (stream) {
+                    console.log(stream.media_is_live);
+
+                    if(!+stream.media_is_live) {
+                        return;
+                    }
+
+                    data[stream.media_name]['hitbox'] = stream;
+                    response.streamers.push(data[stream.media_name])
+                })
 
             send_response(err, response);
         },
