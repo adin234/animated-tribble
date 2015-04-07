@@ -283,7 +283,7 @@ exports.get_hitbox_streamers = function (req, res, next) {
                 result.livestream.forEach(function (stream) {
                     console.log(stream.media_is_live);
 
-                    if(!stream.media_is_live) {
+                    if(!+stream.media_is_live) {
                         return;
                     }
 
