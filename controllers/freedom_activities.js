@@ -8,8 +8,6 @@
      mongo = require(__dirname + '/../lib/mongoskin'),
      mysql = require(__dirname + '/../lib/mysql');
 
-
-
  exports.get_admin_users = function(req, res, next) {
      var start = function() {
 
@@ -107,11 +105,17 @@
  };
 
 
- exports.get_token = function(req, res, next) {
+ exports.validate = function(req, res, next) {
 
-     var csrf_validate;
+     var csrf_token_db;
+
      var start = function() {
-
+             get_csrf_db();
+         },
+         get_csrf_form = function() {
+             return req.query.csrf_token;
+         },
+         get_csrf_db = function() {
              if (typeof req.cookies.user === 'undefined') {
                  return res.jsonp('not logged user');
              }
@@ -126,18 +130,54 @@
                  send_response(true, null);
              }
          },
+         validate = function(csrf) {
+             if (get_csrf_form() === csrf) {
+                 return true;
+             } else {
+                 return false;
+             }
+         },
+         add_all_events = function() {
+
+             var form_data = {
+                 'event_title': req.query.event_title,
+                 'start_date': req.query.start_date,
+                 'end_date': req.query.end_date,
+                 'start_time': req.query.start_time,
+                 'end_time': req.query.end_time,
+                 'e_description': req.query.e_description
+             };
+
+             var freedom_events = mongo.collection('fa_events');
+             if (freedom_events) {
+                 freedom_events.insert({
+                     'event_title': form_data.event_title,
+                     'start_date': form_data.start_date,
+                     'end_date': form_data.end_date,
+                     'start_time': form_data.start_time,
+                     'end_time': form_data.end_time,
+                     'e_description': form_data.e_description
+                 }, send_response);
+             }
+             res.jsonp(form_data);
+         },
          send_response = function(err, result) {
              if (err) {
                  return next(err);
              }
-
              result.forEach(function(item) {
-                 csrf_validate = item.csrf_token;
+                 csrf_token_db = item.csrf_token;
              });
-             res.jsonp(csrf_validate);
+
+             var checker = validate(csrf_token_db);
+             if (checker === true) {
+                 add_all_events();
+             }
+
          };
 
      start();
+
  };
 
  exports.get_events = function(req, res, next) {
@@ -154,109 +194,6 @@
          send_response = function(err, result) {
              if (err) {
                  logger.log('warn', 'Error getting freedom events');
-                 return next(err);
-             }
-
-             res.send(result);
-         };
-
-     start();
- };
-
- exports.search_events = function(req, res, next) {
-
-     var start = function() {
-             var keyword = req.params.keyword,
-                 freedom_events = mongo.collection('fa_events');
-             if (freedom_events) {
-                 return freedom_events.find({
-                         name: keyword
-                     })
-                     .toArray(send_response);
-             } else {
-                 send_response(true, null);
-             }
-         },
-         send_response = function(err, result) {
-             if (err) {
-                 logger.log('warn', 'Error searching freedom events');
-                 return next(err);
-             }
-
-             res.send(result);
-         };
-
-     start();
- };
-
- exports.add_event = function(req, res, next) {
-
-
-     var start = function() {
-             var freedom_events = mongo.collection('fa_events');
-
-             if (freedom_events) {
-
-                 freedom_events.insert(req.body, {}, function() {
-                     send_response(false, 'event added');
-                 });
-             } else {
-                 send_response(true, null);
-             }
-         },
-         send_response = function(err, result) {
-             if (err) {
-                 logger.log('warn', 'Error adding freedom event');
-                 return next(err);
-             }
-
-             res.send(result);
-         };
-
-
-     start();
- };
-
- exports.delete_event = function(req, res, next) {
-
-     var start = function() {
-             var id = req.params.id,
-                 freedom_events = mongo.collection('fa_events');
-             if (freedom_events) {
-                 freedom_events.removeById(id, function() {
-                     send_response(false, 'event deleted');
-                 });
-             } else {
-                 send_response(true, null);
-             }
-         },
-         send_response = function(err, result) {
-             if (err) {
-                 logger.log('warn', 'Error deleting freedom event');
-                 return next(err);
-             }
-
-             res.send(result);
-         };
-
-     start();
-
- };
-
- exports.event_update = function(req, res, next) {
-     var start = function() {
-             var freedom_events = mongo.collection('fa_events');
-             if (freedom_events) {
-                 freedom_events.update(req.body, {}, function() {
-                     send_response(false, 'event updated');
-                 });
-             } else {
-                 send_response(true, null);
-             }
-         },
-         send_response = function(err, result) {
-             if (err) {
-                 logger.log('warn', 'Error updating freedom event');
                  return next(err);
              }
 
