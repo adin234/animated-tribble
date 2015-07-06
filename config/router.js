@@ -11,10 +11,6 @@ var loc = __dirname + '/../controllers/',
     csrf = require('csurf');
 // arrowchat = require(loc + 'arrowchat');
 
-
-
-
-
 module.exports = function(router, logger) {
 
     csrfProtection = csrf({

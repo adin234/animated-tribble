@@ -154,7 +154,7 @@ exports.get_youtube_streamers = function (req, res, next) {
         },
         update_status = function (err, result) {
             index--;
-            if (result && result.items && result.items.length) {
+            if (result && result.items && result.items.length &&  data[result.items[0].snippet.channelId]) {
                 data[result.items[0].snippet.channelId].streams = result;
             }
 
@@ -255,9 +255,11 @@ exports.get_hitbox_streamers = function (req, res, next) {
                     user.field_value = clean(user.field_value);
 
                     data[user.field_value.toLowerCase()] = { user: user };
-                    q.push(user.field_value);
+                    q.push(encodeURIComponent(user.field_value));
                 }
             });
+
+	    console.log(q);
 
             curl.get
                 .to(
@@ -282,11 +284,9 @@ exports.get_hitbox_streamers = function (req, res, next) {
             var response = {
                 streamers: []
             };
-
-            result.livestream &&
+            
+	    result.livestream &&
                 result.livestream.forEach(function (stream) {
-                    console.log(stream.media_is_live);
-
                     if(!+stream.media_is_live) {
                         return;
                     }
@@ -569,8 +569,11 @@ exports.get_streamers = function (req, res, next) {
                         var lanparty_check = req.query.checker || 'LAN PARTY';
                         lanparty_check = new RegExp(lanparty_check, 'ig');
                         if (!req.query.lanparty || (
-                                req.query.lanparty && newitem.twitch.channel
-                                .status.reIndexOf(lanparty_check))) {
+                                req.query.lanparty 
+				&& newitem.twitch
+				&& newitem.twitch.channel
+				&& newitem.twitch.channel.status
+				&& newitem.twitch.channel.status.reIndexOf(lanparty_check))) {
                             streamers.push(newitem);
                         }
                     }
