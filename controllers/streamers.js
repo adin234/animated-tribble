@@ -77,7 +77,7 @@ exports.get_youtube_streamers = function (req, res, next) {
             }
 
             if (req.query.username) {
-                where = ' AND user.username = ' + req.query.username;
+                where = ' AND user.username = "' + req.query.username + '"';
             }
 
             mysql.open(config.mysql)
