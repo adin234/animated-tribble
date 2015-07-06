@@ -73,7 +73,7 @@ exports.get_youtube_streamers = function (req, res, next) {
             }
 
             if (req.query.user) {
-                where = ' AND user.user_id = ' + req.query.user;
+                where = ' AND user.user_id = "'+req.query.user+'"';
             }
 
             if (req.query.username) {
