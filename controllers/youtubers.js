@@ -4,8 +4,8 @@ var config          = require(__dirname + '/../config/config'),
     login           = require(__dirname + '/login'),
     mysql           = require(__dirname + '/../lib/mysql'),
     logger          = require(__dirname + '/../lib/logger'),
-    curl            = require(__dirname + '/../lib/curl'),
-    mongo           = require(__dirname + '/../lib/mongoskin')
+    curl            = require('cuddle')(logger),
+    mongo           = require(__dirname + '/../lib/mongoskin'),
     moment          = require('moment');
 
 exports.get_access = function(user, next) {
@@ -862,5 +862,77 @@ exports.delete_comment = function(req, res, next){
             util.set_cache(cacheKey, result);
             res.send(result);
         };
+    start();
+};
+
+
+exports.get_channel_pic = function(req, res, next) {
+    var data = {},
+        start = function () {
+            if (!req.params.channelId) {
+                return res.send({'message': 'No channel id specfied'})
+            }
+
+            get_channel_cache();
+        },
+        
+        get_channel_cache = function () {
+            mongo.collection('youtube_channel_cache')
+                .findOne({channel_id: req.params.channelId}, get_youtube_data);
+        },
+        
+        get_youtube_data = function (err, item) {
+            if (err) {
+                return res.send(err);
+            }
+
+            //set the initial data to db result
+            //if we get 304, then we use this as response
+            data = item;
+
+            curl.get
+                .to('www.googleapis.com', '443', '/youtube/v3/channels')
+                .add_header('If-None-Match', item.etag || '')
+                .secured()
+                .send({
+                    id: req.params.channelId,
+                    part: 'id,snippet',
+                    key: config.youtube_key
+                })
+                .then(store_results);
+        },
+        
+        store_results = function (err, result) {
+            if (err && err.status_code !== 304) {
+                return res.send(err);
+            }
+
+            //if we have 200 response, then use the result
+            //else we use what is stored in db
+            if (result && result.items) {
+                data = {
+                    channel_id: result.items[0].id,
+                    thumbs: result.items[0].snippet.thumbnails,
+                    etag: result.etag
+                };
+            }
+
+            mongo.collection('youtube_channel_cache')
+                .update(
+                    {channel_id: data.channel_id},
+                    data,
+                    {upsert: true},
+                    send_response
+                );
+        },
+
+        send_response = function (err, result) {
+            if (err) {
+                return next(err);
+            }
+
+            res.send(data);
+        };
+
     start();
 };

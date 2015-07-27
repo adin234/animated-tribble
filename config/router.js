@@ -74,6 +74,7 @@ module.exports = function(router, logger) {
     router.get('/user/personal/:id', user.get_youtuber_profile);
     router.get('/get_location', login.get_location);
     router.get('/earnings', login.get_earnings);
+    router.get('/channel_pic/:channelId', youtubers.get_channel_pic);
     router.get('/loaderio-37804bf004f92d92a8319891ded25d31.html', function(req, res, next) {
         res.send('loaderio-37804bf004f92d92a8319891ded25d31');
     });
